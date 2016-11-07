@@ -1,0 +1,11 @@
+train_net: "siameseModels/siamesePlaces.prototxt"
+base_lr: 0.0001
+lr_policy: "step"
+gamma: 0.1
+stepsize: 12000
+display: 1
+average_loss: 100
+momentum: 0.9
+weight_decay: 0.0005
+snapshot: 0
+snapshot_prefix: "caffenet_fast_rcnn_caltech"

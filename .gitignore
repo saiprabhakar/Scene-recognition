@@ -1,0 +1,5 @@
+data/*
+fast_rcnn/*
+imp_files/*
+*.caffemodel
+*.binaryproto
