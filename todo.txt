@@ -1,0 +1,9 @@
+
+make python layer simple image transformation function to final minimum dimension of (generate and store it). note add the python layer to bashrc path -- mention in readme 
+
+random cropping of the processed image to size of 227*227 (on the fly)
+
+learn cobot 
+
+collect images from cobot for all floors
+

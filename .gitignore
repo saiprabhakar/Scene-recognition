@@ -3,3 +3,5 @@ fast_rcnn/*
 imp_files/*
 *.caffemodel
 *.binaryproto
+utils2/*
+pythonCaffeLayers1/*

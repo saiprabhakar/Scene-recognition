@@ -7,14 +7,15 @@ os.environ['GLOG_minloglevel'] = '2'
 
 
 import argparse
-from utils.timer import Timer
 import numpy as np
 import cv2
 import caffe
 
 #import cPickle
 #import heapq
-from utils.blob import im_to_blob
+#TODO change utils to helper
+#from utils.blob import im_to_blob
+from pythonlayers.helpers import im_to_blob
 #import math
 
 #import matplotlib.pyplot as plt
@@ -147,7 +148,7 @@ def siameseTrainer(siameseSolver, fileName, pretrained_model, pretrained_model_p
     """Test a Fast R-CNN network on an image database."""
     numImagePair = 1#len(imdb.image_index)
     # timers
-    _t = {'im_detect' : Timer(), 'misc' : Timer()}
+    #_t = {'im_detect' : Timer(), 'misc' : Timer()}
     
     
     sw = SiameseWrapper(siameseSolver, pretrained_model=pretrained_model, pretrained_model_proto= pretrained_model_proto )
