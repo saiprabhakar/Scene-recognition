@@ -34,29 +34,39 @@ class MyLayer(caffe.Layer):
         
         #TODO load each image list form helper function
         #write method to calculate similarity labels
-        blob1= helper._get_image_list_blob( m_batch_ids1, self.mean_image)
+        #replace number with variable in the below fn
+        blob1= _get_image_list_blob( m_batch_ids1, self.mean_image, self.scale_min_size, self.final_image_size )
+        blob2= _get_image_list_blob( m_batch_ids2, self.mean_image, self.scale_min_size, self.final_image_size )
         #TODO get from blob 2
         #TODO construct similarity blob
 
 
     def setup(self, bottom, top):
         layer_params = yaml.load(self.param_str)
-        #self.num = layer_params["num_classes"]
-        #print "Parameter num : ", self.num
+        
         self.source_file = layer_params["file_name"]
         self.image_list = parse_file(self.source_file)
         self.length_files = len(self.image_file)
-        #TODO load mean file
+        
         self.batch_size = layer_params["batch_size"]
+        
+
+        self.final_image_size = layer_params["final_image_size"]
+        self.scale_min_size = layer_params["scale_min_size"]
+        self.num_channels = layer_params["num_channels"]
+        
+        self.mean_image = _get_image_from_binaryproto( layer_params["mean_image"])
+        assert self.mean_image.shape[1] == self.scale_min_size 
+        assert self.mean_image.shape[0] == self.scale_min_size 
+        assert self.mean_image.shape[2] == self.num_channels 
+        
         self._name_to_top= {
           'data': 0,
           'data_p': 1,
           'sim': 2}
-        top[0].reshape(1,3,227,227)
-        top[1].reshape(1,3,227,227)
+        top[0].reshape(1, self.num_channels, self.final_image_size, self.final_image_size)
+        top[1].reshape(1, self.num_channels, self.final_image_size, self.final_image_size)
         top[2].reshape(1)
-
-        self.mean_image = helper._get_image_from_binaryproto( mean_file_name)
 
 
     def reshape(self, bottom, top):

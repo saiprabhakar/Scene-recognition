@@ -2,6 +2,7 @@
 
 import numpy as np
 import cv2
+import caffe
 
 def im_list_to_blob(ims):
     """Convert a list of images into a network input.
@@ -38,28 +39,47 @@ def im_to_blob(im):
     return blob
 
 
-#def _get_image_from_binaryproto(filename):
-  #TODO returns image from binaryproto
+def _get_image_from_binaryproto(fileName):
+    #TODO returns image from binaryproto
+    blob = caffe.proto.caffe_pb2.BlobProto()
+    data = open( fileName , 'rb' ).read()
+    blob.ParseFromString(data)
+    arr = np.array( caffe.io.blobproto_to_array(blob) )
+    arr= np.squeeze( arr.transpose((2,3,1,0)) )
+    
+    #im_scaley = float(im_target_size) / float(256)
+    #im_scalex = float(im_target_size) / float(256)
+    #meanImg = cv2.resize(arr, None, None, fx=im_scalex, fy=im_scaley,
+    #                interpolation=cv2.INTER_LINEAR)
+    
+    return arr
 
-def _get_image_list_blob( im_list, mean_image):
+def _image_processor( imageName, mean_image, scale_min_size, final_image_size):
+    im= cv2.imread( imageName)
+    assert im.shape[0] == im.shape[1]
+    target_size = scale_min_size
+    min_curr_size = min(im.shape)
+    im_scale = float(target_size) / float(min_curr_size)
+    #im_scalex = float(target_size) / float(im.shape[1])
+    im = cv2.resize(im[ :min_curr_size, :min_curr_size, :], None, None, fx=im_scale, fy=im_scale,
+                        interpolation=cv2.INTER_LINEAR)
+    im -= mean_image 
+    #TODO random crop
+    #TODO augumentation 
+   
+    im_processed= im[ :scale_min_size, :scale_min_size, :]
+    return im_processed
+
+def _get_image_list_blob( im_list, mean_image, scale_min_size, final_image_size):
     """Builds an input blob from the images in the roidb at the specified
     scales.
     """
     num_images = len(roidb)
     processed_ims = []
     for i in xrange(num_images):
-        #TODO random cropping and noise addition
-        
-        im = cv2.imread( im_list[i][0])
-        target_size = 256
-        im_scaley = float(target_size) / float(im.shape[0])
-        im_scalex = float(target_size) / float(im.shape[1])
-        im = cv2.resize(im_orig, None, None, fx=im_scalex, fy=im_scaley,
-                            interpolation=cv2.INTER_LINEAR)
-        im-=mean_image 
-        processed_ims.append(im)
+        processed_ims.append( _image_proccessor( im_list[i][0], mean_image, scale_min_size, final_image_size)
 
-    #TODO  Create a blob to hold the input images
+    #Create a blob to hold the input images
     blob = im_list_to_blob(processed_ims)
 
     return blob
