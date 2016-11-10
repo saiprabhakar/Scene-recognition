@@ -5,3 +5,5 @@ imp_files/*
 *.binaryproto
 utils2/*
 pythonCaffeLayers1/*
+*.swp
+*.pyc
