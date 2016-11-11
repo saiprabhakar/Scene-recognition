@@ -56,31 +56,36 @@ def _get_image_from_binaryproto(fileName):
 
 def _image_processor( imageName, mean_image, scale_min_size, final_image_size):
     im= cv2.imread( imageName)
-    assert im.shape[0] == im.shape[1]
     target_size = scale_min_size
     min_curr_size = min(im.shape)
     im_scale = float(target_size) / float(min_curr_size)
     #im_scalex = float(target_size) / float(im.shape[1])
     im = cv2.resize(im[ :min_curr_size, :min_curr_size, :], None, None, fx=im_scale, fy=im_scale,
                         interpolation=cv2.INTER_LINEAR)
+    #import pdb
+    #pdb.set_trace()
+    im = im.astype(np.float32)
     im -= mean_image 
     #TODO random crop
     #TODO augumentation 
    
-    im_processed= im[ :scale_min_size, :scale_min_size, :]
+    im_processed= im[ :final_image_size, :final_image_size, :]
     return im_processed
 
 def _get_image_list_blob( im_list, mean_image, scale_min_size, final_image_size):
-    """Builds an input blob from the images in the roidb at the specified
-    scales.
-    """
-    num_images = len(roidb)
+    num_images = len(im_list)
     processed_ims = []
     for i in xrange(num_images):
-        processed_ims.append( _image_proccessor( im_list[i][0], mean_image, scale_min_size, final_image_size)
-
+        processed_ims.append( _image_processor( im_list[i][0], mean_image, scale_min_size, final_image_size))
     #Create a blob to hold the input images
     blob = im_list_to_blob(processed_ims)
 
+    return blob
+
+def _get_sim_list_blob( im_list1, im_list2):
+
+    blob= np.zeros(len(im_list1), dtype=np.float32)
+    sim= np.array( [1 if im_list1[i][1]==im_list2[i][1] else 0 for i in range(len(im_list1))])
+    blob= sim.astype(np.float32)
     return blob
 

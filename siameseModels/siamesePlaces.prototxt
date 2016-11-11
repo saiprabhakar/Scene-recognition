@@ -1,21 +1,15 @@
 name: "SiamesePlaces205-CNN"
-input: "data"
-input_shape {
-  dim: 1
-  dim: 3
-  dim: 227
-  dim: 227
-}
-input: "data_p"
-input_shape {
-  dim: 1
-  dim: 3
-  dim: 227
-  dim: 227
-}
-input: "sim"
-input_shape {
-  dim: 1
+layer {
+  name: 'PythonLayer'
+  type: 'Python'
+  top: 'data'
+  top: 'data_p'
+  top: 'sim'
+  python_param {
+    module: 'mypythonlayer'
+    layer: 'MyLayer'
+    param_str: '{"batch_size": 1, "final_image_size": 227, "scale_min_size": 256, "num_channels": 3, "file_name": "data/imagelist.txt", "mean_image": "placesOriginalModel/places205CNN_mean.binaryproto", "image_source": "data/"}'
+  }
 }
 layer {
   name: "conv1"

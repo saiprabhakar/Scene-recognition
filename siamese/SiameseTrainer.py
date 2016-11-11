@@ -3,7 +3,7 @@
 # --------------------------------------------------------
 import sys
 import os
-os.environ['GLOG_minloglevel'] = '2'
+os.environ['GLOG_minloglevel'] = '1'
 
 
 import argparse
@@ -23,7 +23,7 @@ from pythonlayers.helpers import im_to_blob
 import IPython
 
 im_target_size=227
-train=0
+
 
 #TODO: manual training (forward backward)
 #TODO: convert manual training to step function
@@ -78,10 +78,10 @@ class SiameseWrapper(object):
     use to unnormalize the learned bounding-box regression weights.
     """
 
-    def __init__(self, solver_prototxt, pretrainedSiameseModel=None, pretrained_model=None, pretrained_model_proto= None ):
+    def __init__(self, solver_prototxt, pretrainaedSiameseModel=None, pretrained_model=None, pretrained_model_proto= None, train= 1 ):
         """Initialize the SolverWrapper."""
-        
-
+        import pdb
+        pdb.set_trace()
         if train==1:
           self.solver = caffe.SGDSolver(solver_prototxt)
         else: 
@@ -140,7 +140,69 @@ class SiameseWrapper(object):
           print i, j, imageDict[ imlist[i] ], imageDict[ imlist[j] ],  loss1
         
       
-      IPython.embed()   
+      
+class SiameseTrainWrapper2(object):
+    """A simple wrapper around Caffe's solver.
+    This wrapper gives us control over he snapshotting process, which we
+    use to unnormalize the learned bounding-box regression weights.
+    """
+
+    def __init__(self, solver_prototxt, pretrainedSiameseModel=None, pretrained_model=None, pretrained_model_proto= None, train=1):
+        """Initialize the SolverWrapper."""
+        
+
+        if train==1:
+          self.solver = caffe.SGDSolver(solver_prototxt)
+        else: 
+          self.siameseTestNet= caffe.Net( 'siameseModels/siamesePlaces.prototxt', pretrained_model, caffe.TEST)
+        
+        if pretrainedSiameseModel is not None:
+          print ('Loading pretrained model '
+                 'weights from {:s}').format(pretrainedSiameseModel)
+          if train==1:
+            self.solver.net.copy_from(pretrainedSiameseModel)
+          else:
+            self.siameseTestNet.copy_from(pretrainedSiameseModel)
+            
+        elif pretrained_model is not None:
+          
+          self.caffenet = caffe.Net( pretrained_model_proto, pretrained_model, caffe.TEST)
+          
+          if train==1:
+            self.solver.net.copy_from(pretrained_model)
+          else:
+            self.siameseTestNet.copy_from(pretrained_model)
+          #IPython.embed()
+          #caffenet=[]
+        else :
+          print( 'Initializing completely from scratch .... really ?')
+
+    
+    def testCode (self) :
+      '''f= open(fileName)
+      lines = [line.rstrip('\n') for line in f]
+      imageDict={}
+      imlist=[]
+      
+      if train==1:
+        currentNet= self.solver.net
+      else:
+        currentNet= self.siameseTestNet
+      
+      for i in lines:
+        temp= i.split(' ')
+        imageDict[ temp[0] ]= int(temp[1])
+        imlist.append( temp[0] )'''
+        
+      #import pdb
+      #pdb.set_trace()
+        
+      
+      for i in range( 2) :
+          self.solver.step(1)
+          loss1= self.solver.net.blobs['loss']
+          #print i,  loss1
+        
       
       
       
@@ -150,10 +212,13 @@ def siameseTrainer(siameseSolver, fileName, pretrained_model, pretrained_model_p
     # timers
     #_t = {'im_detect' : Timer(), 'misc' : Timer()}
     
+    sw = SiameseTrainWrapper2(siameseSolver, pretrained_model=pretrained_model, pretrained_model_proto= pretrained_model_proto, train=1 )
     
-    sw = SiameseWrapper(siameseSolver, pretrained_model=pretrained_model, pretrained_model_proto= pretrained_model_proto )
+    sw.testCode()
     
-    sw.testCode( fileName)
+    #sw = SiameseWrapper(siameseSolver, pretrained_model=pretrained_model, pretrained_model_proto= pretrained_model_proto, train=0 )
+    
+    #sw.testCode( fileName)
     
     
     

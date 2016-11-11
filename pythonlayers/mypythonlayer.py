@@ -1,18 +1,20 @@
 import caffe
 import numpy as np
 import yaml
-from helpers import *
+from helpers import _get_image_from_binaryproto, _get_image_list_blob, _get_sim_list_blob
 
 class MyLayer(caffe.Layer):
 
-    def parse_file(self, file_name):
-        f= open(fileName)
+    def _parse_file(self, file_name, image_source):
+        f= open(file_name)
         lines = [line.rstrip('\n') for line in f]
         imageList=[]
-
+        #import pdb
+        #pdb.set_trace()
         for i in lines:
             temp= i.split(' ')
-            imageList.append( ( temp[0], int(temp[1]) )
+            imageList.append( ( image_source+ temp[0], int(temp[1]) ))
+        return imageList
    
     def _shuffle_ids(self):
         self._perm = np.random.permutation( np.arange( self.length_files))
@@ -32,23 +34,31 @@ class MyLayer(caffe.Layer):
         #TODO use prefetch option
         m_batch_ids1, m_batch_ids2 = self._get_next_m_batch_ids()
         
-        #TODO load each image list form helper function
-        #write method to calculate similarity labels
-        #replace number with variable in the below fn
-        blob1= _get_image_list_blob( m_batch_ids1, self.mean_image, self.scale_min_size, self.final_image_size )
-        blob2= _get_image_list_blob( m_batch_ids2, self.mean_image, self.scale_min_size, self.final_image_size )
-        #TODO get from blob 2
-        #TODO construct similarity blob
+        m_batch_1= [self.image_list[i] for i in m_batch_ids1]
+        m_batch_2= [self.image_list[i] for i in m_batch_ids2]
+        blob1= _get_image_list_blob( m_batch_1, self.mean_image, self.scale_min_size, self.final_image_size )
+        blob2= _get_image_list_blob( m_batch_2, self.mean_image, self.scale_min_size, self.final_image_size )
+        blobSim= _get_sim_list_blob( m_batch_1, m_batch_2)
 
+        blobs= {"data":blob1, "data_p":blob2, "sim":blobSim}
+        #TODO verify blob value
+        return blobs
 
     def setup(self, bottom, top):
+        #import pdb
+        #print "\n\n\nsetting python data layer"
+        #pdb.set_trace()
         layer_params = yaml.load(self.param_str)
+        #source_params = yaml.load(self.image_str)
+        #mean_params = yaml.load(self.mean_str)
         
         self.source_file = layer_params["file_name"]
-        self.image_list = parse_file(self.source_file)
-        self.length_files = len(self.image_file)
-        
+        self.image_source = layer_params["image_source"]
+        self.image_list = self._parse_file(self.source_file, self.image_source)
+        self.length_files = len(self.image_list)
+        self._cur =0        
         self.batch_size = layer_params["batch_size"]
+        self._shuffle_ids()
         
 
         self.final_image_size = layer_params["final_image_size"]
@@ -67,6 +77,8 @@ class MyLayer(caffe.Layer):
         top[0].reshape(1, self.num_channels, self.final_image_size, self.final_image_size)
         top[1].reshape(1, self.num_channels, self.final_image_size, self.final_image_size)
         top[2].reshape(1)
+        
+
 
 
     def reshape(self, bottom, top):
@@ -74,11 +86,13 @@ class MyLayer(caffe.Layer):
         pass
 
     def forward(self, bottom, top):
-        
+        print "in forward" 
         blobs= self._get_next_m_batch()
-        #top[0].reshape(*bottom[0].shape)
-        #top[0].data[...] = bottom[0].data + self.num
-        #TODO from blob put data in top
+        for blob_name, blob in blobs.iteritems():
+          top_ind = self._name_to_top[blob_name]
+          top[top_ind].reshape(*(blob.shape))
+          top[top_ind].data[...] = blob.astype(np.float32, copy=False)
+          #print "top ", blob_name, top[top_ind].data.shape
 
     def backward(self, top, propagate_down, bottom):
         pass
