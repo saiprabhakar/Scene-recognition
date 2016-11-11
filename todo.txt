@@ -1,3 +1,4 @@
+Read http://caffe.berkeleyvision.org/tutorial/interfaces.html
 
 simple image transformation function to final minimum dimension of (generate and store it)
 
