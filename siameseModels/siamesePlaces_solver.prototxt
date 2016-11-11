@@ -1,5 +1,8 @@
 train_net: "siameseModels/siamesePlaces.prototxt"
-base_lr: 0.000001
+test_net: "siameseModels/siamesePlaces.prototxt"
+base_lr: 0.0#0.000001
+test_interval: 10000
+test_iter: 1
 lr_policy: "step"
 gamma: 0.0
 stepsize: 12000

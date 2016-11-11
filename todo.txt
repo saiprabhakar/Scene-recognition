@@ -5,8 +5,6 @@ make batch learning work
 
 make mixing of similar and disimilar objects even
 
-make test phase and train phase in network for data layer and loss layer
-
 read about contrastive loss scaling issue
 
 random cropping of the processed image to size of 227*227 (on the fly)

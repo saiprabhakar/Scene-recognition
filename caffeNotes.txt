@@ -1,4 +1,9 @@
 Always switch to test mode while testing or use test_nets (more that one test nets are supported).
+test nets have to be declared at the solver
+If we are coping the weights or resume training by loading weights we need to explicitly inform
+caffe that the test and train nets share weights.
+we need not have a seperate include thing in net.prototxt with train and test phase to use the
+test_nets feature. use it when you need to use different data for the phases
 
 Use python layers for simple tasks
 
@@ -11,7 +16,7 @@ Tied weight change when u change just one of them
 single underscore: is for programmers private use not loaded while using import
 
 Double underscore:
-Any identifier of the form __spam (at least two leading underscores, at most one trailing underscore) is textually replaced with _classname__spam, where classname is the current class name with leading underscore(s) stripped. 
+Any identifier of the form __spam (at least two leading underscores, at most one trailing underscore) is textually replaced with _classname__spam, where classname is the current class name with leading underscore(s) stripped.
 Name mangling is intended to give classes an easy way to define “private” instance variables and methods, without having to worry about instance variables defined by derived classes, or mucking with instance variables by code outside the class.
 
 

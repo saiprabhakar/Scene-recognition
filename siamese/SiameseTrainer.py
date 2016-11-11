@@ -126,6 +126,8 @@ class SiameseWrapper(object):
         else:
             print('Initializing completely from scratch .... really ?')
 
+        self.solver.test_nets[0].share_with(self.solver.net)
+
     def testCode(self, fileName):
         f = open(fileName)
         lines = [line.rstrip('\n') for line in f]
@@ -204,24 +206,32 @@ class SiameseTrainWrapper2(object):
         else:
             print('Initializing completely from scratch .... really ?')
 
+        self.solver.test_nets[0].share_with(self.solver.net)
+
     def testCode(self):
         '''f= open(fileName)
-      lines = [line.rstrip('\n') for line in f]
-      imageDict={}
-      imlist=[]
+        lines = [line.rstrip('\n') for line in f]
+        imageDict={}
+        imlist=[]
 
-      if train==1:
-        currentNet= self.solver.net
-      else:
-        currentNet= self.siameseTestNet
+        if train==1:
+          currentNet= self.solver.net
+        else:
+          currentNet= self.siameseTestNet
 
-      for i in lines:
-        temp= i.split(' ')
-        imageDict[ temp[0] ]= int(temp[1])
-        imlist.append( temp[0] )'''
+        for i in lines:
+          temp= i.split(' ')
+          imageDict[ temp[0] ]= int(temp[1])
+          imlist.append( temp[0] )'''
 
         #import ipdb
         #ipdb.set_trace()
+        #self.solver.test_nets[0].forward()
+        #self.solver.net.forward()
+        #self.solver.test_nets[0].blobs['conv1'].data[0,0,1,1:5]
+        #self.solver.net.blobs['conv1'].data[0,0,1,1:5]
+        import IPython
+        IPython.embed()
 
         for k in range(10):
             simLoss = 0
@@ -241,7 +251,9 @@ class SiameseTrainWrapper2(object):
                 else:
                     disLoss += self.solver.net.blobs['loss'].data
                     disC += 1
-                print i, loss1, self.solver.net.blobs['sim'].data
+                print i, loss1, self.solver.net.blobs[
+                    'sim'].data, self.solver.net.layers[0].m_batch_1[0][
+                        1], self.solver.net.layers[0].m_batch_2[0][1]
             print "**** net loss", simLoss / simC, disLoss / disC
         '''for j in range(len(self.solver.net.blobs['sim'].data)):
                 import IPython
