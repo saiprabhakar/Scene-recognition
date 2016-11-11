@@ -1,0 +1,14 @@
+- repo: git://github.com/pre-commit/pre-commit-hooks
+  sha: v0.5.1
+  hooks:
+    - id: trailing-whitespace
+      exclude: 'deps'
+    - id: check-yaml
+      exclude: 'deps'
+    - id: check-merge-conflict
+      exclude: 'deps'
+- repo: git://github.com/pre-commit/mirrors-yapf
+  sha: v0.11.0
+  hooks:
+    - id: yapf
+      exclude: 'deps'

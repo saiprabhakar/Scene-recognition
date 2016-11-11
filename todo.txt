@@ -1,9 +1,17 @@
 
-make python layer simple image transformation function to final minimum dimension of (generate and store it). note add the python layer to bashrc path -- mention in readme 
+simple image transformation function to final minimum dimension of (generate and store it)
+
+make batch learning work
+
+make mixing of similar and disimilar objects even
+
+make test phase and train phase in network for data layer and loss layer
+
+read about contrastive loss scaling issue
 
 random cropping of the processed image to size of 227*227 (on the fly)
 
-learn cobot 
+learn cobot
 
 collect images from cobot for all floors
 
