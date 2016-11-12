@@ -4,7 +4,7 @@
 # --------------------------------------------------------
 import sys
 import os
-os.environ['GLOG_minloglevel'] = '1'
+os.environ['GLOG_minloglevel'] = '0'
 
 import argparse
 import numpy as np
@@ -230,8 +230,8 @@ class SiameseTrainWrapper2(object):
         #self.solver.net.forward()
         #self.solver.test_nets[0].blobs['conv1'].data[0,0,1,1:5]
         #self.solver.net.blobs['conv1'].data[0,0,1,1:5]
-        import IPython
-        IPython.embed()
+        #import IPython
+        #IPython.embed()
 
         for k in range(10):
             simLoss = 0
@@ -243,8 +243,8 @@ class SiameseTrainWrapper2(object):
                 loss1 = self.solver.net.blobs['loss'].data
                 #self.solver.net.layers[0].source_file
 
-                #import IPython
-                #IPython.embed()
+                import IPython
+                IPython.embed()
                 if self.solver.net.blobs['sim'].data == 1:
                     simLoss += self.solver.net.blobs['loss'].data
                     simC += 1
@@ -268,8 +268,7 @@ class SiameseTrainWrapper2(object):
 
 def siameseTrainer(siameseSolver, fileName, pretrained_model,
                    pretrained_model_proto):
-    """Test a Fast R-CNN network on an image database."""
-    numImagePair = 1  #len(imdb.image_index)
+    #numImagePair = 1  #len(imdb.image_index)
     # timers
     #_t = {'im_detect' : Timer(), 'misc' : Timer()}
 
@@ -278,6 +277,8 @@ def siameseTrainer(siameseSolver, fileName, pretrained_model,
         pretrained_model=pretrained_model,
         pretrained_model_proto=pretrained_model_proto,
         train=1)
+    import IPython
+    IPython.embed()
 
     sw.testCode()
 

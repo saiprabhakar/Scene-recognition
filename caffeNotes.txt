@@ -19,4 +19,4 @@ Double underscore:
 Any identifier of the form __spam (at least two leading underscores, at most one trailing underscore) is textually replaced with _classname__spam, where classname is the current class name with leading underscore(s) stripped.
 Name mangling is intended to give classes an easy way to define “private” instance variables and methods, without having to worry about instance variables defined by derived classes, or mucking with instance variables by code outside the class.
 
-
+contrastive loss in caffe currently has no reshape which led to error when we reshape just the input layer--- we can make changes and commmit

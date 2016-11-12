@@ -2,11 +2,9 @@ Read http://caffe.berkeleyvision.org/tutorial/interfaces.html
 
 simple image transformation function to final minimum dimension of (generate and store it)
 
-make batch learning work
-
 make mixing of similar and disimilar objects even
 
-read about contrastive loss scaling issue
+read about contrastive loss scaling issue: checkout legacy verion
 
 random cropping of the processed image to size of 227*227 (on the fly)
 
@@ -14,3 +12,11 @@ learn cobot
 
 collect images from cobot for all floors
 
+
+
+
+
+
+
+
+Fix reshape thing in contrastive loss

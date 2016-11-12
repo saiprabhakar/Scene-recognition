@@ -8,7 +8,7 @@ layer {
   python_param {
     module: 'mypythonlayer'
     layer: 'MyLayer'
-    param_str: '{"batch_size": 1, "final_image_size": 227, "scale_min_size": 256, "num_channels": 3, "file_name": "data/imagelist.txt", "mean_image": "placesOriginalModel/places205CNN_mean.binaryproto", "image_source": "data/"}'
+    param_str: '{"batch_size": 2, "final_image_size": 227, "scale_min_size": 256, "num_channels": 3, "file_name": "data/imagelist.txt", "mean_image": "placesOriginalModel/places205CNN_mean.binaryproto", "image_source": "data/"}'
   }
 }
 layer {
@@ -645,6 +645,13 @@ layer {
     dropout_ratio: 0.5
   }
 }
+#layer: {
+# name: 'loss'
+# type: 'EuclideanLoss'#EUCLIDEAN_LOSS
+# bottom: 'fc7'
+# bottom: 'fc7_p'
+# top: 'loss'
+#}
 layer {
   name: "loss"
   type: "ContrastiveLoss"
@@ -653,6 +660,6 @@ layer {
   bottom: "sim"
   top: "loss"
   contrastive_loss_param {
-    margin: 1
+    margin: 100
   }
 }

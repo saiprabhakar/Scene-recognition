@@ -74,24 +74,30 @@ class MyLayer(caffe.Layer):
         assert self.mean_image.shape[2] == self.num_channels
 
         self._name_to_top = {'data': 0, 'data_p': 1, 'sim': 2}
-        top[0].reshape(1, self.num_channels, self.final_image_size,
+        top[0].reshape(2, self.num_channels, self.final_image_size,
                        self.final_image_size)
-        top[1].reshape(1, self.num_channels, self.final_image_size,
+        top[1].reshape(2, self.num_channels, self.final_image_size,
                        self.final_image_size)
-        top[2].reshape(1)
+        top[2].reshape(2)
 
     def reshape(self, bottom, top):
         #if using batch mode do reshaping when calling forward
         pass
 
     def forward(self, bottom, top):
-        #print "in forward"
+        print "in forward"
         blobs = self._get_next_m_batch()
+        #import IPython
+        #IPython.embed()
         for blob_name, blob in blobs.iteritems():
             top_ind = self._name_to_top[blob_name]
             top[top_ind].reshape(*(blob.shape))
             top[top_ind].data[...] = blob.astype(np.float32, copy=False)
             #print "top ", blob_name, top[top_ind].data.shape
+        self.tp = top
+        #import IPython
+        #IPython.embed()
+        print "out forward"
 
     def backward(self, top, propagate_down, bottom):
         pass

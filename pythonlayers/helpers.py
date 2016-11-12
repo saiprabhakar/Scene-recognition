@@ -10,8 +10,9 @@ def im_list_to_blob(ims):
 
     Assumes images are already prepared (means subtracted, BGR order, ...).
     """
-    max_shape = np.array([im.shape for im in ims]).max(axis=0)
+    max_shape = [227, 227]  #np.array([im.shape for im in ims]).max(axis=0)
     num_images = len(ims)
+    #print "num images ", num_images
     blob = np.zeros(
         (num_images, max_shape[0], max_shape[1], 3), dtype=np.float32)
     for i in xrange(num_images):
@@ -97,7 +98,11 @@ def _get_image_list_blob(im_list, mean_image, scale_min_size,
 def _get_sim_list_blob(im_list1, im_list2):
 
     blob = np.zeros(len(im_list1), dtype=np.float32)
-    sim = np.array([1 if im_list1[i][1] == im_list2[i][1] else 1
+    #blob = np.zeros( len(im_list1), dtype=np.float32)
+    sim = np.array([1 if im_list1[i][1] == im_list2[i][1] else 0
                     for i in range(len(im_list1))])
+    #sim = sim[:, np.newaxis, np.newaxis, np.newaxis]
+    #import IPython
+    #IPython.embed()
     blob = sim.astype(np.float32)
     return blob
