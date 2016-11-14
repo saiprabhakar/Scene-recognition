@@ -97,7 +97,7 @@ def _get_image_list_blob(im_list, mean_image, scale_min_size,
 
 def _get_sim_list_blob(im_list1, im_list2):
 
-    blob = np.zeros(len(im_list1), dtype=np.float32)
+    #blob = np.zeros(len(im_list1), dtype=np.float32)
     #blob = np.zeros( len(im_list1), dtype=np.float32)
     sim = np.array([1 if im_list1[i][1] == im_list2[i][1] else 0
                     for i in range(len(im_list1))])

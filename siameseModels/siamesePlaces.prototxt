@@ -8,7 +8,7 @@ layer {
   python_param {
     module: 'mypythonlayer'
     layer: 'MyLayer'
-    param_str: '{"batch_size": 2, "final_image_size": 227, "scale_min_size": 256, "num_channels": 3, "file_name": "data/imagelist.txt", "mean_image": "placesOriginalModel/places205CNN_mean.binaryproto", "image_source": "data/"}'
+    param_str: '{"batch_size": 1, "final_image_size": 227, "scale_min_size": 256, "num_channels": 3, "file_name": "data/imagelist.txt", "mean_image": "placesOriginalModel/places205CNN_mean.binaryproto", "image_source": "data/"}'
   }
 }
 layer {
@@ -645,18 +645,65 @@ layer {
     dropout_ratio: 0.5
   }
 }
-#layer: {
-# name: 'loss'
-# type: 'EuclideanLoss'#EUCLIDEAN_LOSS
-# bottom: 'fc7'
-# bottom: 'fc7_p'
-# top: 'loss'
-#}
+layer {
+  bottom: "fc7"
+  top: "fc8_s"
+  name: "fc8_s"
+  type: "InnerProduct"
+  param {
+    name: "fc8_s_w"
+    lr_mult: 10
+    decay_mult: 1
+  }
+  param {
+    name: "fc8_s_b"
+    lr_mult: 20
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 1000
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
+  bottom: "fc7_p"
+  top: "fc8_s_p"
+  name: "fc8_s_p"
+  type: "InnerProduct"
+  param {
+    name: "fc8_s_w"
+    lr_mult: 10
+    decay_mult: 1
+  }
+  param {
+    name: "fc8_s_b"
+    lr_mult: 20
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 1000
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
 layer {
   name: "loss"
   type: "ContrastiveLoss"
-  bottom: "fc7"
-  bottom: "fc7_p"
+  bottom: "fc8_s"
+  bottom: "fc8_s_p"
   bottom: "sim"
   top: "loss"
   contrastive_loss_param {

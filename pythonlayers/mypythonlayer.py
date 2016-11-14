@@ -9,29 +9,84 @@ class MyLayer(caffe.Layer):
         f = open(file_name)
         lines = [line.rstrip('\n') for line in f]
         imageList = []
+        self.m_img = 0
+        self.n_img = 0
+        self.m_pairs = []
+        self.n_pairs = []
+
         #import pdb
         #pdb.set_trace()
         for i in lines:
             temp = i.split(' ')
             imageList.append((image_source + temp[0], int(temp[1])))
-        return imageList
+        self.image_list = imageList
+        self.length_files = len(self.image_list)
 
-    def _shuffle_ids(self):
-        self._perm = np.random.permutation(np.arange(self.length_files))
+        #creating combinations of images
+        import itertools
+        all_pairs = list(
+            itertools.product(
+                range(self.length_files), range(self.length_files)))
+        for i in range(len(all_pairs)):
+            if self.image_list[all_pairs[i][0]][1] == self.image_list[
+                    all_pairs[i][1]][1]:
+                self.m_pairs.append(all_pairs[i])
+                self.m_img += 1
+            else:
+                self.n_pairs.append(all_pairs[i])
+                self.n_img += 1
+
+        #return imageList
+
+        # def _shuffle_ids(self):
+        #     self._perm = np.random.permutation(np.arange(self.length_files))
+        #     self._cur = 0
+
+    def _get_corrected_pairs(self):
+        # import IPython
+        # IPython.embed()
+        # making the lengths of similar and dissimilar images equal
+        m_pairs = self.m_pairs
+        n_pairs = self.n_pairs
+        if len(m_pairs) >= len(n_pairs):
+            ind = np.random.permutation(len(m_pairs) - len(n_pairs))
+            for i in ind:
+                n_pairs.append(n_pairs[i])
+        else:
+            ind = np.random.permutation(len(n_pairs) - len(m_pairs))
+            for i in ind:
+                m_pairs.append(m_pairs[i])
+        return m_pairs, n_pairs
+
+    def _shuffle_pair_ids(self):
+        print "shufle called"
+        m_c_pairs, n_c_pairs = self._get_corrected_pairs()
+        self._all_m_pairs = m_c_pairs + n_c_pairs
+        self._perm = np.random.permutation(np.arange(len(self._all_m_pairs)))
         self._cur = 0
 
-    def _get_next_m_batch_ids(self):
-        if self._cur + 2 * self.batch_size >= self.length_files:
-            self._shuffle_ids()
-        m_batch_ids1 = self._perm[self._cur:self._cur + self.batch_size]
-        self._cur += self.batch_size
-        m_batch_ids2 = self._perm[self._cur:self._cur + self.batch_size]
+    def _get_next_m_batch_ids_pair(self):
+        if self._cur + self.batch_size >= len(self._all_m_pairs):
+            print self._cur, self.batch_size, len(self._all_m_pairs)
+            self._shuffle_pair_ids()
+        perm_ind = self._perm[self._cur:self._cur + self.batch_size]
+        m_batch_ids1 = [self._all_m_pairs[i][0] for i in perm_ind]
+        m_batch_ids2 = [self._all_m_pairs[i][1] for i in perm_ind]
         self._cur += self.batch_size
         return m_batch_ids1, m_batch_ids2
 
+    # def _get_next_m_batch_ids(self):
+    #     if self._cur + 2 * self.batch_size >= self.length_files:
+    #         self._shuffle_ids()
+    #     m_batch_ids1 = self._perm[self._cur:self._cur + self.batch_size]
+    #     self._cur += self.batch_size
+    #     m_batch_ids2 = self._perm[self._cur:self._cur + self.batch_size]
+    #     self._cur += self.batch_size
+    #     return m_batch_ids1, m_batch_ids2
+
     def _get_next_m_batch(self):
         #TODO use prefetch option
-        m_batch_ids1, m_batch_ids2 = self._get_next_m_batch_ids()
+        m_batch_ids1, m_batch_ids2 = self._get_next_m_batch_ids_pair()
 
         self.m_batch_1 = [self.image_list[i] for i in m_batch_ids1]
         self.m_batch_2 = [self.image_list[i] for i in m_batch_ids2]
@@ -57,11 +112,10 @@ class MyLayer(caffe.Layer):
 
         self.source_file = layer_params["file_name"]
         self.image_source = layer_params["image_source"]
-        self.image_list = self._parse_file(self.source_file, self.image_source)
-        self.length_files = len(self.image_list)
+        self._parse_file(self.source_file, self.image_source)
         self._cur = 0
         self.batch_size = layer_params["batch_size"]
-        self._shuffle_ids()
+        self._shuffle_pair_ids()
 
         self.final_image_size = layer_params["final_image_size"]
         self.scale_min_size = layer_params["scale_min_size"]
@@ -85,7 +139,7 @@ class MyLayer(caffe.Layer):
         pass
 
     def forward(self, bottom, top):
-        print "in forward"
+        #print "in forward"
         blobs = self._get_next_m_batch()
         #import IPython
         #IPython.embed()
@@ -97,7 +151,7 @@ class MyLayer(caffe.Layer):
         self.tp = top
         #import IPython
         #IPython.embed()
-        print "out forward"
+        #print "out forward"
 
     def backward(self, top, propagate_down, bottom):
         pass
