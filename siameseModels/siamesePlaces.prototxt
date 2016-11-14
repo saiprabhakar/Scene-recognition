@@ -705,8 +705,29 @@ layer {
   bottom: "fc8_s"
   bottom: "fc8_s_p"
   bottom: "sim"
+  include {
+    phase: TRAIN
+  }
   top: "loss"
   contrastive_loss_param {
     margin: 100
   }
 }
+
+layer {
+  name: "testloss"
+  type: "EuclideanLoss"
+  bottom: "fc8_s"
+  bottom: "fc8_s_p"
+  include {
+    phase: TEST
+  }
+  top: "testloss"
+}
+#layers: {
+# name: 'loss'
+# type: EUCLIDEAN_LOSS
+# bottom: 'fc7'
+# bottom: 'label'
+# top: 'loss'
+#};

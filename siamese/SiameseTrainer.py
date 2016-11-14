@@ -209,21 +209,6 @@ class SiameseTrainWrapper2(object):
         self.solver.test_nets[0].share_with(self.solver.net)
 
     def testCode(self):
-        '''f= open(fileName)
-        lines = [line.rstrip('\n') for line in f]
-        imageDict={}
-        imlist=[]
-
-        if train==1:
-          currentNet= self.solver.net
-        else:
-          currentNet= self.siameseTestNet
-
-        for i in lines:
-          temp= i.split(' ')
-          imageDict[ temp[0] ]= int(temp[1])
-          imlist.append( temp[0] )'''
-
         #import ipdb
         #ipdb.set_trace()
         #self.solver.test_nets[0].forward()
@@ -233,6 +218,8 @@ class SiameseTrainWrapper2(object):
         #import IPython
         #IPython.embed()
 
+        #print self.solver.net.params['conv1'][0].data[1,1,1:5,1]
+        #print self.solver.test_nets[0].params['conv1'][0].data[1,1,1:5,1]
         for k in range(100):
             disLoss = 0
             simLoss = 0
@@ -241,29 +228,37 @@ class SiameseTrainWrapper2(object):
             for i in range(131):
                 self.solver.step(1)
                 loss1 = self.solver.net.blobs['loss'].data
-                # self.solver.net.layers[0].source_file
-                # self.solver.test_nets[0].forward()
                 #import IPython
                 #IPython.embed()
                 if self.solver.net.blobs['sim'].data == 1:
-                    if self.solver.net.layers[0].m_batch_1[0][
-                            1] != self.solver.net.layers[0].m_batch_2[0][1]:
-                        print "1 error found"
                     simC += 1
                     simLoss += loss1
                 else:
-                    if self.solver.net.layers[0].m_batch_1[0][
-                            1] == self.solver.net.layers[0].m_batch_2[0][1]:
-                        print "2 error found"
                     disC += 1
                     disLoss += loss1
+            print " net loss", simLoss / (simC + 0.1), disLoss / (
+                disC + 0.1), simC, disC
+            disLoss = 0
+            simLoss = 0
+            simC = 0
+            disC = 0
+            if k % 1 == 0:
+                for i in range(131):
+                    loss1 = self.solver.test_nets[0].forward()
+                    #print i, loss1, loss1['sim'], loss1['testloss']
+                    if loss1['sim'] == 1:
+                        simC += 1
+                        simLoss += loss1['testloss']
+                    else:
+                        disC += 1
+                        disLoss += loss1['testloss']
+                print "testing**** net loss", simLoss / (
+                    simC + 0.1), disLoss / (disC + 0.1), simC, disC
                 #simLoss+= loss1#self.solver.net.blobs['loss'].data
                 #print i
                 #print i, loss1, self.solver.net.blobs[
                 #    'sim'].data#, self.solver.net.layers[0].m_batch_1[0][
                 #1], self.solver.net.layers[0].m_batch_2[0][1]
-            print "**** net loss", simLoss / (simC + 0.1), disLoss / (
-                disC + 0.1), simC, disC
 
 
 def siameseTrainer(siameseSolver, fileName, pretrained_model,

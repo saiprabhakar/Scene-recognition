@@ -59,7 +59,7 @@ class MyLayer(caffe.Layer):
         return m_pairs, n_pairs
 
     def _shuffle_pair_ids(self):
-        print "shufle called"
+        # print "shufle called"
         m_c_pairs, n_c_pairs = self._get_corrected_pairs()
         self._all_m_pairs = m_c_pairs + n_c_pairs
         self._perm = np.random.permutation(np.arange(len(self._all_m_pairs)))
@@ -67,7 +67,7 @@ class MyLayer(caffe.Layer):
 
     def _get_next_m_batch_ids_pair(self):
         if self._cur + self.batch_size >= len(self._all_m_pairs):
-            print self._cur, self.batch_size, len(self._all_m_pairs)
+            # print self._cur, self.batch_size, len(self._all_m_pairs)
             self._shuffle_pair_ids()
         perm_ind = self._perm[self._cur:self._cur + self.batch_size]
         m_batch_ids1 = [self._all_m_pairs[i][0] for i in perm_ind]
