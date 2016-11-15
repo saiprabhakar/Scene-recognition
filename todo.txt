@@ -10,7 +10,7 @@ learn cobot
 
 collect images from cobot for all floors
 
-
+verify rbg vs gbr
 
 
 

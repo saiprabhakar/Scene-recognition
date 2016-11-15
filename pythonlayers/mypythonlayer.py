@@ -6,6 +6,10 @@ from helpers import _get_image_from_binaryproto, _get_image_list_blob, _get_sim_
 
 class MyLayer(caffe.Layer):
     def _parse_file(self, file_name, image_source):
+        """Loads file_names and the class labels
+        and generates pairs of images
+        for siamese training.
+        """
         f = open(file_name)
         lines = [line.rstrip('\n') for line in f]
         imageList = []
@@ -43,6 +47,8 @@ class MyLayer(caffe.Layer):
         #     self._cur = 0
 
     def _get_corrected_pairs(self):
+        """Makes the number of positive and negative samples equal
+        """
         # import IPython
         # IPython.embed()
         # making the lengths of similar and dissimilar images equal
@@ -59,6 +65,10 @@ class MyLayer(caffe.Layer):
         return m_pairs, n_pairs
 
     def _shuffle_pair_ids(self):
+        """Makes the positive and negative samples equal.
+
+        Shuffles the data pairs.
+        """
         # print "shufle called"
         m_c_pairs, n_c_pairs = self._get_corrected_pairs()
         self._all_m_pairs = m_c_pairs + n_c_pairs
@@ -66,6 +76,8 @@ class MyLayer(caffe.Layer):
         self._cur = 0
 
     def _get_next_m_batch_ids_pair(self):
+        """Creates next mini batch file ids, depending on batch size.
+        """
         if self._cur + self.batch_size >= len(self._all_m_pairs):
             # print self._cur, self.batch_size, len(self._all_m_pairs)
             self._shuffle_pair_ids()
@@ -85,6 +97,8 @@ class MyLayer(caffe.Layer):
     #     return m_batch_ids1, m_batch_ids2
 
     def _get_next_m_batch(self):
+        """Creates data blobs for next mini batch.
+        """
         #TODO use prefetch option
         m_batch_ids1, m_batch_ids2 = self._get_next_m_batch_ids_pair()
 
@@ -99,10 +113,14 @@ class MyLayer(caffe.Layer):
         blobSim = _get_sim_list_blob(self.m_batch_1, self.m_batch_2)
 
         blobs = {"data": blob1, "data_p": blob2, "sim": blobSim}
-        #TODO verify blob value
         return blobs
 
     def setup(self, bottom, top):
+        """This function will be called by Caffe.
+
+        Loads layer parameters and sets up data from source and
+        data blobs.
+        """
         #import pdb
         #print "\n\n\nsetting python data layer"
         #pdb.set_trace()
@@ -128,14 +146,21 @@ class MyLayer(caffe.Layer):
         assert self.mean_image.shape[2] == self.num_channels
 
         self._name_to_top = {'data': 0, 'data_p': 1, 'sim': 2}
-        top[0].reshape(2, self.num_channels, self.final_image_size,
-                       self.final_image_size)
-        top[1].reshape(2, self.num_channels, self.final_image_size,
-                       self.final_image_size)
-        top[2].reshape(2)
+        top[0].reshape(self.batch_size, self.num_channels,
+                       self.final_image_size, self.final_image_size)
+        top[1].reshape(self.batch_size, self.num_channels,
+                       self.final_image_size, self.final_image_size)
+        top[2].reshape(self.batch_size)
 
     def reshape(self, bottom, top):
-        #if using batch mode do reshaping when calling forward
+        """This function will be called by Caffe.
+
+        Reshaping based on batch size will be done at the
+        during layer setup.
+
+        Note: Contrastive loss dont support reshaping after
+        layer setup.
+        """
         pass
 
     def forward(self, bottom, top):

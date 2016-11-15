@@ -7,7 +7,6 @@ import caffe
 
 def im_list_to_blob(ims):
     """Convert a list of images into a network input.
-
     Assumes images are already prepared (means subtracted, BGR order, ...).
     """
     max_shape = [227, 227]  #np.array([im.shape for im in ims]).max(axis=0)
@@ -27,7 +26,6 @@ def im_list_to_blob(ims):
 
 def im_to_blob(im):
     """Convert a list of images into a network input.
-
     Assumes images are already prepared (means subtracted, BGR order, ...).
     """
     max_shape = im.shape

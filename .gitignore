@@ -1,9 +1,13 @@
 data/*
 fast_rcnn/*
 imp_files/*
-*.caffemodel
-*.binaryproto
 utils2/*
 pythonCaffeLayers1/*
+papers/*
+
+*.caffemodel
+*.binaryproto
 *.swp
 *.pyc
+*.png
+*.back
