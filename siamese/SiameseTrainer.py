@@ -1,7 +1,10 @@
 #/usr/bin/python
 # --------------------------------------------------------
-# Written by Sai Prabhakar, CMU
+# floor_recog
+# Written by Sai Prabhakar
+# CMU-RI Masters
 # --------------------------------------------------------
+
 import sys
 import os
 os.environ['GLOG_minloglevel'] = '3'

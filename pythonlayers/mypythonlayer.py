@@ -1,3 +1,11 @@
+# --------------------------------------------------------
+# floor_recog
+# Written by Sai Prabhakar
+# CMU-RI Masters
+# --------------------------------------------------------
+
+#coustom python data layer
+
 import caffe
 import numpy as np
 import yaml
@@ -164,6 +172,11 @@ class MyLayer(caffe.Layer):
         pass
 
     def forward(self, bottom, top):
+        """This function will be called by Caffe.
+
+        Prepares data for next minibatcha and supplies them to
+        corresponding top blobs.
+        """
         #print "in forward"
         blobs = self._get_next_m_batch()
         #import IPython
@@ -173,10 +186,14 @@ class MyLayer(caffe.Layer):
             top[top_ind].reshape(*(blob.shape))
             top[top_ind].data[...] = blob.astype(np.float32, copy=False)
             #print "top ", blob_name, top[top_ind].data.shape
-        self.tp = top
+        #self.tp = top
         #import IPython
         #IPython.embed()
         #print "out forward"
 
     def backward(self, top, propagate_down, bottom):
+        """This function will be called by Caffe.
+
+        Not necessary for this data layer.
+        """
         pass

@@ -1,12 +1,20 @@
+# --------------------------------------------------------
+# floor_recog
+# Written by Sai Prabhakar
+# CMU-RI Masters
+# --------------------------------------------------------
+
 #helper function for blob loading and stuff
 
 import numpy as np
 import cv2
 import caffe
+from random import randint
 
 
 def im_list_to_blob(ims):
     """Convert a list of images into a network input.
+
     Assumes images are already prepared (means subtracted, BGR order, ...).
     """
     max_shape = [227, 227]  #np.array([im.shape for im in ims]).max(axis=0)
@@ -26,6 +34,7 @@ def im_list_to_blob(ims):
 
 def im_to_blob(im):
     """Convert a list of images into a network input.
+
     Assumes images are already prepared (means subtracted, BGR order, ...).
     """
     max_shape = im.shape
@@ -40,7 +49,8 @@ def im_to_blob(im):
 
 
 def _get_image_from_binaryproto(fileName):
-    #TODO returns image from binaryproto
+    """Returns image from binaryproto
+    """
     blob = caffe.proto.caffe_pb2.BlobProto()
     data = open(fileName, 'rb').read()
     blob.ParseFromString(data)
@@ -56,6 +66,9 @@ def _get_image_from_binaryproto(fileName):
 
 
 def _image_processor(imageName, mean_image, scale_min_size, final_image_size):
+    """Loads image and prepares image (mean subtraction, random cropping
+    ...), in BGR order.
+    """
     im = cv2.imread(imageName)
     target_size = scale_min_size
     min_curr_size = min(im.shape)
@@ -72,15 +85,21 @@ def _image_processor(imageName, mean_image, scale_min_size, final_image_size):
     #pdb.set_trace()
     im = im.astype(np.float32)
     im -= mean_image
-    #TODO random crop
     #TODO augumentation
-
-    im_processed = im[:final_image_size, :final_image_size, :]
+    xrand = randint(0, scale_min_size - final_image_size)
+    yrand = randint(0, scale_min_size - final_image_size)
+    im_processed = im[yrand:yrand + final_image_size, xrand:xrand +
+                      final_image_size, :]
     return im_processed
 
 
 def _get_image_list_blob(im_list, mean_image, scale_min_size,
                          final_image_size):
+    #"""Takes in a list of image name, mean file, scaling size
+    #and final image size.
+    #
+    #Generates blob of processed image.
+    #"""
     num_images = len(im_list)
     processed_ims = []
     for i in xrange(num_images):
@@ -94,7 +113,11 @@ def _get_image_list_blob(im_list, mean_image, scale_min_size,
 
 
 def _get_sim_list_blob(im_list1, im_list2):
+    """Takes in list of tuples of imagename and the
+    corresponding class.
 
+    Generate similarity data label.
+    """
     #blob = np.zeros(len(im_list1), dtype=np.float32)
     #blob = np.zeros( len(im_list1), dtype=np.float32)
     sim = np.array([1 if im_list1[i][1] == im_list2[i][1] else 0

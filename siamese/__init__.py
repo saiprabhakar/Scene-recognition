@@ -1,11 +1,7 @@
 # --------------------------------------------------------
-# Fast R-CNN
-# Copyright (c) 2015 Microsoft
-# Licensed under The MIT License [see LICENSE for details]
-# Written by Ross Girshick
+# floor_recog
+# Written by Sai Prabhakar
+# CMU-RI Masters
 # --------------------------------------------------------
 
-#from . import config
-#from . import train
-#from . import test
 from . import SiameseTrainer
