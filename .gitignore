@@ -4,6 +4,7 @@ imp_files/*
 utils2/*
 pythonCaffeLayers1/*
 papers/*
+savedModels/*
 
 *.caffemodel
 *.binaryproto

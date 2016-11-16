@@ -13,22 +13,11 @@ import argparse
 import numpy as np
 import cv2
 import caffe
-
-#import cPickle
-#import heapq
-#TODO change utils to helper
-#from utils.blob import im_to_blob
 from pythonlayers.helpers import im_to_blob
-#import math
+import matplotlib.pyplot as plt
 
-#import matplotlib.pyplot as plt
-
-import IPython
-
+plt.ion()
 im_target_size = 227
-
-#TODO: manual training (forward backward)
-#TODO: convert manual training to step function
 
 blob = caffe.proto.caffe_pb2.BlobProto()
 data = open('placesOriginalModel/places205CNN_mean.binaryproto', 'rb').read()
@@ -223,38 +212,59 @@ class SiameseTrainWrapper2(object):
 
         #print self.solver.net.params['conv1'][0].data[1,1,1:5,1]
         #print self.solver.test_nets[0].params['conv1'][0].data[1,1,1:5,1]
+
+        num_data_epoch_train = 131
+        num_data_epoch_test = 131
         for k in range(100):
             disLoss = 0
             simLoss = 0
             simC = 0
             disC = 0
-            for i in range(131):
+            plot_data_d = np.zeros((0, 2))
+            plot_data_s = np.zeros((0, 2))
+            for i in range(num_data_epoch_train):
                 self.solver.step(1)
                 loss1 = self.solver.net.blobs['loss'].data
-                #import IPython
-                #IPython.embed()
                 if self.solver.net.blobs['sim'].data == 1:
                     simC += 1
                     simLoss += loss1
+                    plot_data_s = np.vstack((plot_data_s, [k + 0.5, loss1]))
                 else:
                     disC += 1
                     disLoss += loss1
+                    plot_data_d = np.vstack((plot_data_d, [k, loss1]))
             print " net loss", simLoss / (simC + 0.1), disLoss / (
                 disC + 0.1), simC, disC
+            plt.figure(1)
+            #plt.clf()
+            plt.xlim(-0.5, 100)
+            plt.title("train errors")
+            plt.plot(plot_data_s[:, 0], plot_data_s[:, 1], 'r.')
+            plt.plot(plot_data_d[:, 0], plot_data_d[:, 1], 'b.')
+            #plt.plot(plot_data[:,0], plot_data[:,1], '.')
+            #plt.show()
+            plt.pause(0.05)
+
             disLoss = 0
             simLoss = 0
             simC = 0
             disC = 0
+            plot_data_s = np.zeros((0, 2))
+            plot_data_d = np.zeros((0, 2))
             if k % 1 == 0:
-                for i in range(131):
+                for i in range(num_data_epoch_test):
                     loss1 = self.solver.test_nets[0].forward()
                     #print i, loss1, loss1['sim'], loss1['testloss']
                     if loss1['sim'] == 1:
                         simC += 1
                         simLoss += loss1['testloss']
+                        plot_data_s = np.vstack(
+                            (plot_data_s, [k + 0.5, loss1['testloss']]))
                     else:
                         disC += 1
                         disLoss += loss1['testloss']
+                        plot_data_d = np.vstack(
+                            (plot_data_d, [k, loss1['testloss']]))
                 print "testing**** net loss", simLoss / (
                     simC + 0.1), disLoss / (disC + 0.1), simC, disC
                 #simLoss+= loss1#self.solver.net.blobs['loss'].data
@@ -262,6 +272,19 @@ class SiameseTrainWrapper2(object):
                 #print i, loss1, self.solver.net.blobs[
                 #    'sim'].data#, self.solver.net.layers[0].m_batch_1[0][
                 #1], self.solver.net.layers[0].m_batch_2[0][1]
+
+                #import IPython
+                #IPython.embed()
+
+                plt.figure(2)
+                #plt.clf()
+                #plt.xlim(-0.5, 1.5)
+                plt.xlim(-0.5, 100)
+                plt.title("test distance")
+                plt.plot(plot_data_s[:, 0], plot_data_s[:, 1], 'r.')
+                plt.plot(plot_data_d[:, 0], plot_data_d[:, 1], 'b.')
+                #plt.show()
+                plt.pause(0.05)
 
 
 def siameseTrainer(siameseSolver, fileName, pretrained_model,
