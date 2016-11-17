@@ -70,6 +70,7 @@ def _image_processor(imageName, mean_image, scale_min_size, final_image_size):
     ...), in BGR order.
     """
     im = cv2.imread(imageName)
+    print imageName
     target_size = scale_min_size
     min_curr_size = min(im.shape)
     im_scale = float(target_size) / float(min_curr_size)

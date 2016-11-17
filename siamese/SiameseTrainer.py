@@ -23,6 +23,7 @@ blob = caffe.proto.caffe_pb2.BlobProto()
 data = open('placesOriginalModel/places205CNN_mean.binaryproto', 'rb').read()
 blob.ParseFromString(data)
 arr = np.array(caffe.io.blobproto_to_array(blob))
+# changing order of rows, colmn, channel, batch_size
 arr = np.squeeze(arr.transpose((2, 3, 1, 0)))
 im_scaley = float(im_target_size) / float(256)
 im_scalex = float(im_target_size) / float(256)
@@ -213,8 +214,8 @@ class SiameseTrainWrapper2(object):
         #print self.solver.net.params['conv1'][0].data[1,1,1:5,1]
         #print self.solver.test_nets[0].params['conv1'][0].data[1,1,1:5,1]
 
-        num_data_epoch_train = 131
-        num_data_epoch_test = 131
+        num_data_epoch_train = 11
+        num_data_epoch_test = 11
         for k in range(100):
             disLoss = 0
             simLoss = 0

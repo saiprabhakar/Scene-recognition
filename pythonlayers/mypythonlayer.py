@@ -10,6 +10,7 @@ import caffe
 import numpy as np
 import yaml
 from helpers import _get_image_from_binaryproto, _get_image_list_blob, _get_sim_list_blob
+from random import randint
 
 
 class MyLayer(caffe.Layer):
@@ -57,19 +58,20 @@ class MyLayer(caffe.Layer):
     def _get_corrected_pairs(self):
         """Makes the number of positive and negative samples equal
         """
-        # import IPython
-        # IPython.embed()
+        #import IPython
+        #IPython.embed()
         # making the lengths of similar and dissimilar images equal
         m_pairs = self.m_pairs
         n_pairs = self.n_pairs
         if len(m_pairs) >= len(n_pairs):
-            ind = np.random.permutation(len(m_pairs) - len(n_pairs))
-            for i in ind:
-                n_pairs.append(n_pairs[i])
+            #ind = np.random.permutation(len(m_pairs) - len(n_pairs))
+            ind = len(m_pairs) - len(n_pairs)
+            for i in range(ind):
+                n_pairs.append(self.n_pairs[randint(0, len(self.n_pairs) - 1)])
         else:
-            ind = np.random.permutation(len(n_pairs) - len(m_pairs))
-            for i in ind:
-                m_pairs.append(m_pairs[i])
+            ind = len(n_pairs) - len(m_pairs)
+            for i in range(ind):
+                m_pairs.append(self.m_pairs[randint(0, len(self.m_pairs) - 1)])
         return m_pairs, n_pairs
 
     def _shuffle_pair_ids(self):
@@ -80,6 +82,7 @@ class MyLayer(caffe.Layer):
         # print "shufle called"
         m_c_pairs, n_c_pairs = self._get_corrected_pairs()
         self._all_m_pairs = m_c_pairs + n_c_pairs
+        print "total images ", len(self._all_m_pairs)
         self._perm = np.random.permutation(np.arange(len(self._all_m_pairs)))
         self._cur = 0
 
