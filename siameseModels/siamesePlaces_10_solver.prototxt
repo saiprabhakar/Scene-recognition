@@ -1,16 +1,16 @@
-train_net: "siameseModels/siamesePlaces.prototxt"
-test_net: "siameseModels/siamesePlaces.prototxt"
+train_net: "siameseModels/siamesePlaces_10.prototxt"
+test_net: "siameseModels/siamesePlaces_10.prototxt"
 base_lr: 0.000001
 #base_lr: 0.000001
 #currently not using test auto test features
 test_interval: 1000000
 test_iter: 1
 lr_policy: "step"
-#gamma: 0.0
-stepsize: 12000
+gamma: 0.0
+stepsize: 1200000
 #display: 1
 #average_loss: 100
 momentum: 0.0
 weight_decay: 0.0000
 #snapshot: 760
-#snapshot_prefix: "savedModels/siamese_model_"
+#snapshot_prefix: "savedModels/siamese_10_model_"

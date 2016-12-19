@@ -1,21 +1,15 @@
-name: "SiamesePlaces205-CNN"
-input: "data"
-input_shape {
-  dim: 1
-  dim: 3
-  dim: 227
-  dim: 227
-}
-input: "data_p"
-input_shape {
-  dim: 1
-  dim: 3
-  dim: 227
-  dim: 227
-}
-input: "sim"
-input_shape {
-  dim: 1
+name: "SiamesePlaces205-100-CNN"
+layer {
+  name: 'PythonLayer'
+  type: 'Python'
+  top: 'data'
+  top: 'data_p'
+  top: 'sim'
+  python_param {
+    module: 'mypythonlayer'
+    layer: 'MyLayer'
+    param_str: '{"batch_size": 1, "final_image_size": 227, "scale_min_size": 256, "num_channels": 3, "file_name": "data/imagelist.txt", "mean_image": "placesOriginalModel/places205CNN_mean.binaryproto", "image_source": "data/"}'
+  }
 }
 layer {
   name: "conv1"
@@ -652,13 +646,88 @@ layer {
   }
 }
 layer {
-  name: "loss"
-  type: "ContrastiveLoss"
   bottom: "fc7"
-  bottom: "fc7_p"
-  bottom: "sim"
-  top: "loss"
-  contrastive_loss_param {
-    margin: 1
+  top: "fc8_s"
+  name: "fc8_s"
+  type: "InnerProduct"
+  param {
+    name: "fc8_s_w"
+    lr_mult: 10
+    decay_mult: 1
+  }
+  param {
+    name: "fc8_s_b"
+    lr_mult: 20
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
   }
 }
+layer {
+  bottom: "fc7_p"
+  top: "fc8_s_p"
+  name: "fc8_s_p"
+  type: "InnerProduct"
+  param {
+    name: "fc8_s_w"
+    lr_mult: 10
+    decay_mult: 1
+  }
+  param {
+    name: "fc8_s_b"
+    lr_mult: 20
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
+  name: "loss"
+  type: "ContrastiveLoss"
+  bottom: "fc8_s"
+  bottom: "fc8_s_p"
+  bottom: "sim"
+  include {
+    phase: TRAIN
+  }
+  top: "loss"
+  contrastive_loss_param {
+    margin: 100
+  }
+}
+
+layer {
+  name: "testloss"
+  type: "EuclideanLoss"
+  bottom: "fc8_s"
+  bottom: "fc8_s_p"
+  include {
+    phase: TEST
+  }
+  top: "testloss"
+}
+#layers: {
+# name: 'loss'
+# type: EUCLIDEAN_LOSS
+# bottom: 'fc7'
+# bottom: 'label'
+# top: 'loss'
+#};

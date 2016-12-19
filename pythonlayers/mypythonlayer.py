@@ -82,7 +82,7 @@ class MyLayer(caffe.Layer):
         # print "shufle called"
         m_c_pairs, n_c_pairs = self._get_corrected_pairs()
         self._all_m_pairs = m_c_pairs + n_c_pairs
-        print "total images ", len(self._all_m_pairs)
+        print "total images in dataset ", len(self._all_m_pairs)
         self._perm = np.random.permutation(np.arange(len(self._all_m_pairs)))
         self._cur = 0
 
