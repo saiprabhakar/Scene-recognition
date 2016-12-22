@@ -13,5 +13,5 @@ savedModels/*
 *.pyc
 *.png
 *.back
-!siamese.png
-!modified_siamese.png
+!siamese1.png
+!modified_siamese1.png
