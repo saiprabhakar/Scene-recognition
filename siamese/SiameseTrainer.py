@@ -38,25 +38,9 @@ meanarr = cv2.resize(
 
 def _get_image_blob(img_name):
 
-    im = cv2.imread(img_name)
-    im_orig = im.astype(np.float32, copy=True)
-
-    #im_orig -= 140.8
-
-    im_shape = im_orig.shape
-    im_shape = im_orig.shape
-    im_size = im_shape[0:2]  #rows, colmns y,x
-
-    im_scaley = float(im_target_size) / float(im_size[0])
-    im_scalex = float(im_target_size) / float(im_size[1])
-    im = cv2.resize(
-        im_orig,
-        None,
-        None,
-        fx=im_scalex,
-        fy=im_scaley,
-        interpolation=cv2.INTER_LINEAR)
-
+    im = _load_image(img_name)
+    #im = cv2.imread(img_name)
+    #print im.shape, meanarr.shape
     processed_ims = im - meanarr
     #processed_ims = im
     #IPython.embed()
@@ -65,8 +49,68 @@ def _get_image_blob(img_name):
     return blob
 
 
+def _load_image(img_name):
+    #TODO crop the image to a square one then reshape
+    im = cv2.imread(img_name)
+    im_orig = im.astype(np.float32, copy=True)
+    #im_shape = im_orig.shape
+    #im_size = im_shape[0:2]  #rows, colmns y,x
+
+    min_curr_size = min(im.shape[:2])
+    im_scale = float(im_target_size) / float(min_curr_size)
+
+    #im_scaley = float(im_target_size) / float(im_size[0])
+    #im_scalex = float(im_target_size) / float(im_size[1])
+    im = cv2.resize(
+        im_orig[:min_curr_size, :min_curr_size, :],
+        None,
+        None,
+        fx=im_scale,
+        fy=im_scale,
+        interpolation=cv2.INTER_LINEAR)
+    return im.copy()
+
+
+def _get_occluded_image_blobs(img_name, size_patch, stride):
+    im = _load_image(img_name)
+
+    cR = 0
+    l_blob = []
+    l_occ_map = []
+    while im_target_size - 1 > cR + size_patch - 1:
+        cC = 0
+        while im_target_size - 1 > cC + size_patch - 1:
+            #import IPython
+            #IPython.embed()
+
+            occluded_image, occ_map = _occlude_image(im.copy(), cR, cC,
+                                                     size_patch, stride)
+            cC += stride
+
+            #cv2.namedWindow('image', cv2.WINDOW_NORMAL)
+            #cv2.imshow('image',occluded_image.astype(np.uint8))
+            #cv2.waitKey(0)
+            #cv2.destroyAllWindows()
+
+            processed_ims = occluded_image - meanarr
+            #IPython.embed()
+            l_blob.append(im_to_blob(processed_ims))
+            l_occ_map.append(occ_map)
+        cR += stride
+
+    return l_blob, l_occ_map
+
+
+def _occlude_image(im, cR, cC, size_patch, stride):
+    """creates gray patches in image."""
+    im[cR:cR + stride, cC:cC + stride, :] = 127.5
+    occ_map = np.ones((im_target_size, im_target_size))
+    occ_map[cR:cR + stride, cC:cC + stride] = 0
+    return im, occ_map
+
+
 def _get_blobs(f1, f2, sim):
-    """Convert an image and RoIs within that image into network inputs."""
+    """Convert an image into network inputs."""
     blobs = {'data': None, 'data_p': None, 'sim': None}
     blobs['data'] = _get_image_blob(f1)
     blobs['data_p'] = _get_image_blob(f2)
@@ -92,14 +136,13 @@ class SiameseTrainWrapper2(object):
                  class_size=6,
                  class_adju=2):
         """Initialize the SolverWrapper."""
-        #caffe.set_device(0)
-        #caffe.set_mode_gpu()
-        caffe.set_mode_cpu()
+        caffe.set_device(0)
+        caffe.set_mode_gpu()
+        #caffe.set_mode_cpu()
         self.train = train
         self.netSize = netSize
         self.class_size = class_size
         self.class_adju = class_adju
-        #caffe.set_mode_cpu()
         if self.train == 1:
             self.solver = caffe.SGDSolver(solver_prototxt)
             if pretrainedSiameseModel is not None:
@@ -135,8 +178,8 @@ class SiameseTrainWrapper2(object):
         #print self.solver.net.params['conv1'][0].data[1,1,1:5,1]
         #print self.solver.test_nets[0].params['conv1'][0].data[1,1,1:5,1]
         #1500
-        num_data_epoch_train = 540
-        num_data_epoch_test = 540
+        num_data_epoch_train = 5  #40
+        num_data_epoch_test = 5  #40
         tStamp = '-Timestamp-{:%Y-%m-%d-%H:%M:%S}'.format(
             datetime.datetime.now())
         plt.ion()
@@ -239,6 +282,66 @@ class SiameseTrainWrapper2(object):
         self.solver.net.save(preName + '-net.caffemodel')
         plt.close('all')
 
+    def visualizing_m1(self, fileName):
+        f = open(fileName)
+        lines = [line.rstrip('\n') for line in f]
+        imageDict = {}
+        imlist = []
+        for i in lines:
+            temp = i.split(' ')
+            imageDict[temp[0]] = int(temp[1])
+            imlist.append(temp[0])
+        im1 = 17
+        im2 = 2
+        #occlude im1 and get map on im1
+        print 'generating heat map for ', imageDict[imlist[im1]], imlist[
+            im1], imageDict[imlist[im2]], imlist[im2],
+        self.generate_heat_map(imageDict, imlist, im1, im2)
+
+    def generate_heat_map(self, imageDict, imlist, im1, im2):
+        size_patch = 30
+        stride = 15
+        l_blobs_im1, l_occ_map = _get_occluded_image_blobs(
+            img_name='data/' + imlist[im1],
+            size_patch=size_patch,
+            stride=stride)
+        print "no of occluded maps ", len(l_blobs_im1)
+        blob_im2 = _get_image_blob('data/' + imlist[im2])
+        blobs = {'data': None, 'data_p': None, 'sim': None}
+        blobs['data'] = blob_im2
+        heat_map = np.zeros((im_target_size, im_target_size))
+
+        for i in range(len(l_blobs_im1)):
+            blobs['data_p'] = l_blobs_im1[i]
+
+            blobs_out1 = self.siameseTestNet.forward(
+                data=blobs['data'].astype(
+                    np.float32, copy=False),
+                data_p=blobs['data_p'].astype(
+                    np.float32, copy=False), )
+            loss1 = blobs_out1['testloss'].copy()
+            #print "loss1 ", loss1
+            heat_map += l_occ_map[i] * loss1
+        heat_map = np.log(heat_map + 1)
+        heat_map = 100 * (heat_map - heat_map.min()) / (
+            heat_map.max() - heat_map.min())
+        img1 = _load_image('data/' + imlist[im1])
+        img2 = _load_image('data/' + imlist[im2])
+
+        img1_heat = img1.copy()
+        img1_heat[:, :, 2] = heat_map
+
+        plt.matshow(heat_map[:200, :200], cmap=plt.cm.gray)
+        plt.show()
+        import IPython
+        IPython.embed()
+        #fig0 = plt.figure()
+        #f, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+        #ax1.imshow(img1_heat)
+        #ax1.set_title('Sharing Y axis')
+        #ax2.imshow(img2)
+        #plt.show()
+
     def test(self, fileName):
         f = open(fileName)
         lines = [line.rstrip('\n') for line in f]
@@ -248,7 +351,9 @@ class SiameseTrainWrapper2(object):
             temp = i.split(' ')
             imageDict[temp[0]] = int(temp[1])
             imlist.append(temp[0])
+        self.generate_confusion_matrix(imageDict, imlist)
 
+    def generate_confusion_matrix(self, imageDict, imlist):
         num_data_epoch_test = 540
         tStamp = '-Timestamp-{:%Y-%m-%d-%H:%M:%S}'.format(
             datetime.datetime.now())
@@ -352,6 +457,7 @@ def siameseTrainer(siameseSolver,
                    testProto,
                    pretrained_model_proto,
                    train=1,
+                   visu=0,
                    netSize=1000):
     #numImagePair = 1  #len(imdb.image_index)
     # timers
@@ -371,9 +477,12 @@ def siameseTrainer(siameseSolver,
     if train == 1:
         print "training"
         sw.trainTest()
-    else:
+    elif visu == 0:
         print "testing with ", pretrainedSiameseModel
         sw.test(fileName)
+    else:
+        print 'visalizing with ', pretrainedSiameseModel
+        sw.visualizing_m1(fileName)
 
     #sw = SiameseWrapper(siameseSolver, pretrained_model=pretrained_model, pretrained_model_proto= pretrained_model_proto, train=0 )
 

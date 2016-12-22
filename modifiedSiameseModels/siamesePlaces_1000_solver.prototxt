@@ -1,0 +1,14 @@
+train_net: "modifiedSiameseModels/siamesePlaces_1000.prototxt"
+test_net: "modifiedSiameseModels/siamesePlaces_1000.prototxt"
+base_lr: 0.0001
+#currently not using auto test features
+test_interval: 1000000
+test_iter: 1
+lr_policy: "step"
+#high gamma since our data is very less
+gamma: 0.99
+stepsize: 540
+momentum: 0.9
+weight_decay: 0.0005
+#snapshot: 760
+#snapshot_prefix: "savedModels/siamese_model_"

@@ -1,37 +1,18 @@
-name: "SiamesePlaces205-100-CNN"
+name: "SiamesePlaces205-CNN"
 layer {
   name: 'PythonLayer'
   type: 'Python'
   top: 'data'
   top: 'data_p'
   top: 'sim'
-  include {
-    phase: TRAIN
-  }
+  top: 'label1'
+  top: 'label2'
   python_param {
-    module: 'mypythonlayer'
+    module: 'mypythonlayer2'
     layer: 'MyLayer'
     param_str: '{"batch_size": 1, "final_image_size": 227, "scale_min_size": 256, "num_channels": 3, "file_name": "data/imagelist.txt", "mean_image": "placesOriginalModel/places205CNN_mean.binaryproto", "image_source": "data/"}'
   }
 }
-
-layer {
-  name: 'PythonLayer'
-  type: 'Python'
-  top: 'data'
-  top: 'data_p'
-  top: 'sim'
-  include {
-    phase: TEST
-  }
-  python_param {
-    module: 'mypythonlayer'
-    layer: 'MyLayer'
-    param_str: '{"batch_size": 1, "final_image_size": 227, "scale_min_size": 256, "num_channels": 3, "file_name": "data/imagelist_test.txt", "mean_image": "placesOriginalModel/places205CNN_mean.binaryproto", "image_source": "data/"}'
-  }
-}
-
-
 layer {
   name: "conv1"
   type: "Convolution"
@@ -673,16 +654,16 @@ layer {
   type: "InnerProduct"
   param {
     name: "fc8_s_w"
-    lr_mult: 10
+    lr_mult: 1000
     decay_mult: 1
   }
   param {
     name: "fc8_s_b"
-    lr_mult: 20
+    lr_mult: 2000
     decay_mult: 0
   }
   inner_product_param {
-    num_output: 10
+    num_output: 1000
     weight_filler {
       type: "gaussian"
       std: 0.01
@@ -700,16 +681,16 @@ layer {
   type: "InnerProduct"
   param {
     name: "fc8_s_w"
-    lr_mult: 10
+    lr_mult: 1000
     decay_mult: 1
   }
   param {
     name: "fc8_s_b"
-    lr_mult: 20
+    lr_mult: 2000
     decay_mult: 0
   }
   inner_product_param {
-    num_output: 10
+    num_output: 1000
     weight_filler {
       type: "gaussian"
       std: 0.01
@@ -721,25 +702,140 @@ layer {
   }
 }
 layer {
-  name: "loss"
-  type: "ContrastiveLoss"
-  bottom: "fc8_s"
   bottom: "fc8_s_p"
-  bottom: "sim"
-  include {
-    phase: TRAIN
+  top: "fc8_s_p_r"
+  name: "relu8_p"
+  type: "ReLU"
+}
+layer {
+  bottom: "fc8_s_p_r"
+  top: "fc8_s_p_r"
+  name: "drop8_p"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
   }
-  top: "loss"
-  contrastive_loss_param {
-    margin: 100
+}
+layer {
+  bottom: "fc8_s_p_r"
+  top: "fc9_f_p"
+  name: "fc9_f_p"
+  type: "InnerProduct"
+  param {
+    name: "fc9_f_w"
+    lr_mult: 1000
+    decay_mult: 1
+  }
+  param {
+    name: "fc9_f_b"
+    lr_mult: 2000
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 6
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
   }
 }
 
 layer {
+  bottom: "fc8_s"
+  top: "fc8_s_r"
+  name: "relu8"
+  type: "ReLU"
+}
+layer {
+  bottom: "fc8_s_r"
+  top: "fc8_s_r"
+  name: "drop8"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+layer {
+  bottom: "fc8_s_r"
+  top: "fc9_f"
+  name: "fc9_f"
+  type: "InnerProduct"
+  param {
+    name: "fc9_f_w"
+    lr_mult: 1000
+    decay_mult: 1
+  }
+  param {
+    name: "fc9_f_b"
+    lr_mult: 2000
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 6
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+layer {
+  bottom: "fc8_s"
+  top: "fc8_s_sig"
+  name: "sigmoid8"
+  type: "Sigmoid"
+}
+layer {
+  bottom: "fc8_s_p"
+  top: "fc8_s_p_sig"
+  name: "sigmoid8_p"
+  type: "Sigmoid"
+}
+layer {
+  name: "cont_loss"
+  type: "ContrastiveLoss"
+  bottom: "fc8_s_sig"
+  bottom: "fc8_s_p_sig"
+  bottom: "sim"
+  include {
+    phase: TRAIN
+  }
+  top: "cont_loss"
+  contrastive_loss_param {
+    margin: 10
+  }
+  loss_weight: 0.5
+}
+layer {
+  name: "class_loss_1"
+  type: "SoftmaxWithLoss"
+  bottom: "fc9_f"
+  bottom: "label1"
+  top: "softmax_loss_1"
+  loss_weight: 0.25
+}
+layer {
+  name: "class_loss_2"
+  type: "SoftmaxWithLoss"
+  bottom: "fc9_f_p"
+  bottom: "label2"
+  top: "softmax_loss_2"
+  loss_weight: 0.25
+}
+#Test accuracy layer
+layer {
   name: "testloss"
   type: "EuclideanLoss"
-  bottom: "fc8_s"
-  bottom: "fc8_s_p"
+  bottom: "fc8_s_sig"
+  bottom: "fc8_s_p_sig"
   include {
     phase: TEST
   }

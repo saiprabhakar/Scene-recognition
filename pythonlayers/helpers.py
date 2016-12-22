@@ -72,7 +72,7 @@ def _image_processor(imageName, mean_image, scale_min_size, final_image_size):
     im = cv2.imread(imageName)
     #print imageName
     target_size = scale_min_size
-    min_curr_size = min(im.shape)
+    min_curr_size = min(im.shape[:2])
     im_scale = float(target_size) / float(min_curr_size)
     #im_scalex = float(target_size) / float(im.shape[1])
     im = cv2.resize(
@@ -82,8 +82,6 @@ def _image_processor(imageName, mean_image, scale_min_size, final_image_size):
         fx=im_scale,
         fy=im_scale,
         interpolation=cv2.INTER_LINEAR)
-    #import pdb
-    #pdb.set_trace()
     im = im.astype(np.float32)
     im -= mean_image
     #TODO augumentation
@@ -91,6 +89,9 @@ def _image_processor(imageName, mean_image, scale_min_size, final_image_size):
     yrand = randint(0, scale_min_size - final_image_size)
     im_processed = im[yrand:yrand + final_image_size, xrand:xrand +
                       final_image_size, :]
+
+    #import IPython
+    #IPython.embed()
     return im_processed
 
 
@@ -111,6 +112,13 @@ def _get_image_list_blob(im_list, mean_image, scale_min_size,
     blob = im_list_to_blob(processed_ims)
 
     return blob
+
+
+def _get_label_blob(im_list1):
+    #import IPython
+    #IPython.embed()
+    label = np.array([im_list1[i][1] for i in range(len(im_list1))]) - 2
+    return label.astype(np.float32)
 
 
 def _get_sim_list_blob(im_list1, im_list2):
