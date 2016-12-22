@@ -28,7 +28,7 @@ Methods implemented:
     python trainModifiedSiamese.py
     ~~~
 
-    ![Modified Siamese net](modified_siamese.png "An exemplary image")
+    ![Modified Siamese net](modified_siamese.png )
 
 trainSiamese.py or trainModifiedSiamese.py
 ----
