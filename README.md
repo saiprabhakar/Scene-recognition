@@ -19,7 +19,7 @@ Methods implemented:
     python trainSiamese.py
     ~~~
 
-    ![Siamese net](siamese.png )
+    ![Siamese net](siamese1.png )
 
   2. Modified Siamese network:
 
@@ -28,7 +28,7 @@ Methods implemented:
     python trainModifiedSiamese.py
     ~~~
 
-    ![Modified Siamese net](modified_siamese.png )
+    ![Modified Siamese net](modified_siamese1.png )
 
 trainSiamese.py or trainModifiedSiamese.py
 ----
