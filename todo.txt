@@ -1,16 +1,13 @@
 Read http://caffe.berkeleyvision.org/tutorial/interfaces.html
 
-simple image transformation function to final minimum dimension of (generate and store it)
+advanced image transformation function to final minimum dimension of (generate and store it)
 
 read about contrastive loss scaling issue: checkout legacy verion
-
-random cropping of the processed image to size of 227*227 (on the fly)
 
 learn cobot
 
 collect images from cobot for all floors
 
-verify rbg vs gbr
 
 
 

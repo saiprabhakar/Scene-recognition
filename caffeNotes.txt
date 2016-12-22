@@ -19,7 +19,7 @@ Contrastive loss in caffe currently has no reshape which led to error when we re
 
 Caffe uses BGR because of openCV -- also BGR
 
-
+Using weights in loss only affect the back prop and not the forward prop
 
 
 PYTHON:
