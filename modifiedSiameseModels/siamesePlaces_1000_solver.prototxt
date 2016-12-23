@@ -1,6 +1,6 @@
 train_net: "modifiedSiameseModels/siamesePlaces_1000.prototxt"
 test_net: "modifiedSiameseModels/siamesePlaces_1000.prototxt"
-base_lr: 0.0001
+base_lr: 0.00001
 #currently not using auto test features
 test_interval: 1000000
 test_iter: 1

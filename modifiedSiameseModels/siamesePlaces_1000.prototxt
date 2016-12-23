@@ -7,12 +7,33 @@ layer {
   top: 'sim'
   top: 'label1'
   top: 'label2'
+  include {
+    phase: TRAIN
+  }
   python_param {
     module: 'mypythonlayer2'
     layer: 'MyLayer'
     param_str: '{"batch_size": 1, "final_image_size": 227, "scale_min_size": 256, "num_channels": 3, "file_name": "data/imagelist.txt", "mean_image": "placesOriginalModel/places205CNN_mean.binaryproto", "image_source": "data/"}'
   }
 }
+layer {
+  name: 'PythonLayer'
+  type: 'Python'
+  top: 'data'
+  top: 'data_p'
+  top: 'sim'
+  top: 'label1'
+  top: 'label2'
+  include {
+    phase: TEST
+  }
+  python_param {
+    module: 'mypythonlayer2'
+    layer: 'MyLayer'
+    param_str: '{"batch_size": 1, "final_image_size": 227, "scale_min_size": 256, "num_channels": 3, "file_name": "data/imagelist_test.txt", "mean_image": "placesOriginalModel/places205CNN_mean.binaryproto", "image_source": "data/"}'
+  }
+}
+
 layer {
   name: "conv1"
   type: "Convolution"
@@ -716,6 +737,9 @@ layer {
     dropout_ratio: 0.5
   }
 }
+
+#softmax branch
+
 layer {
   bottom: "fc8_s_p_r"
   top: "fc9_f_p"
@@ -787,6 +811,8 @@ layer {
   }
 }
 
+#contrastive branch
+
 layer {
   bottom: "fc8_s"
   top: "fc8_s_sig"
@@ -799,6 +825,9 @@ layer {
   name: "sigmoid8_p"
   type: "Sigmoid"
 }
+
+#loss layers
+
 layer {
   name: "cont_loss"
   type: "ContrastiveLoss"
@@ -819,6 +848,9 @@ layer {
   type: "SoftmaxWithLoss"
   bottom: "fc9_f"
   bottom: "label1"
+  include {
+    phase: TRAIN
+  }
   top: "softmax_loss_1"
   loss_weight: 0.25
 }
@@ -827,10 +859,15 @@ layer {
   type: "SoftmaxWithLoss"
   bottom: "fc9_f_p"
   bottom: "label2"
+  include {
+    phase: TRAIN
+  }
   top: "softmax_loss_2"
   loss_weight: 0.25
 }
-#Test accuracy layer
+
+#Test final layer
+
 layer {
   name: "testloss"
   type: "EuclideanLoss"
@@ -839,12 +876,32 @@ layer {
   include {
     phase: TEST
   }
-  top: "testloss"
+  top: "euc_dist"
 }
-#layers: {
-# name: 'loss'
-# type: EUCLIDEAN_LOSS
-# bottom: 'fc7'
-# bottom: 'label'
-# top: 'loss'
-#};
+layer {
+  name: "accuracy1"
+  type: "Accuracy"
+  bottom: "fc9_f"
+  bottom: "label1"
+  top: "accuracy1"
+}
+layer {
+  name: "accuracy2"
+  type: "Accuracy"
+  bottom: "fc9_f_p"
+  bottom: "label2"
+  top: "accuracy2"
+}
+#layer {
+#  bottom: "fc9_f"
+#  top: "prob1"
+#  name: "prob1"
+#  type: "Softmax"
+#}
+#layer {
+#  bottom: "fc9_f_p"
+#  top: "prob2"
+#  name: "prob2"
+#  type: "Softmax"
+#}
+

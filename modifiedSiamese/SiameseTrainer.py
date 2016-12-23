@@ -96,7 +96,7 @@ class SiameseTrainWrapper2(object):
         #print self.solver.test_nets[0].params['conv1'][0].data[1,1,1:5,1]
         #1500
         num_data_epoch_train = 540
-        num_data_epoch_test = 540
+        num_data_epoch_test = 240
         tStamp = '-Timestamp-{:%Y-%m-%d-%H:%M:%S}'.format(
             datetime.datetime.now())
         plt.ion()
@@ -114,8 +114,11 @@ class SiameseTrainWrapper2(object):
                 lossId2s = 0
                 for i in range(num_data_epoch_train):
                     self.solver.step(1)
+
+                    #if i%50 == 0 and i != 0:
                     #import IPython
                     #IPython.embed()
+
                     lossCo = 0.2 * self.solver.net.blobs['cont_loss'].data
                     lossId1 = 0.4 * self.solver.net.blobs[
                         'softmax_loss_1'].data
@@ -133,8 +136,8 @@ class SiameseTrainWrapper2(object):
                     lossId1s += lossId1
                     lossId2s += lossId2
 
-                    print "sim", self.solver.net.blobs[
-                        'sim'].data, "cont loss", lossCo, "id1", lossId1, "id2", lossId2
+                    #print "sim", self.solver.net.blobs[
+                    #    'sim'].data, "cont loss", lossCo, "id1", lossId1, "id2", lossId2
                 plot_data_id_l1 = np.vstack(
                     (plot_data_id_l1, [k, lossId1s / num_data_epoch_train]))
                 plot_data_id_l2 = np.vstack(
@@ -150,26 +153,101 @@ class SiameseTrainWrapper2(object):
 
                 plt.figure(2)
                 plt.xlim(-0.5, 100)
+                plt.title(str(self.netSize) + "train softmax loss")
                 plt.plot(plot_data_id_l1[:, 0], plot_data_id_l1[:, 1], 'r.')
                 plt.plot(plot_data_id_l2[:, 0], plot_data_id_l2[:, 1], 'b.')
                 plt.pause(0.05)
 
-                #if k % 5 == 0:
-            #preName = 'modifiedNetResults/' + 'Modified-netsize-' + str(
-            #self.netSize) + '-epoch-' + str(
-            #k) + '-tstamp-' + tStamp
-            #self.solver.net.save(preName + '-net.caffemodel')
+                if k % 5 == 0:
+                    acc1 = np.zeros(self.class_size)
+                    acc2 = np.zeros(self.class_size)
+                    fre1 = np.zeros(self.class_size)
+                    fre2 = np.zeros(self.class_size)
+                    plot_acc1 = np.zeros((0, 2))
+                    plot_acc2 = np.zeros((0, 2))
+                    confusion_dis = np.zeros(
+                        (self.class_size, self.class_size))
+                    for i in range(num_data_epoch_test):
+                        loss1 = self.solver.test_nets[0].forward()
+                        #print i, loss1, loss1['sim'], loss1['euc_dist']
+                        #import IPython
+                        #IPython.embed()
+
+                        if loss1['sim'] == 1:
+                            simC += 1
+                            simLoss += loss1['euc_dist']
+                            plot_data_s = np.vstack(
+                                (plot_data_s, [k + 0.5, loss1['euc_dist']]))
+                        else:
+                            disC += 1
+                            disLoss += loss1['euc_dist']
+                            plot_data_d = np.vstack(
+                                (plot_data_d, [k, loss1['euc_dist']]))
+                        id1 = self.solver.test_nets[0].layers[0].m_batch_1[0][
+                            1] - self.class_adju
+                        id2 = self.solver.test_nets[0].layers[0].m_batch_2[0][
+                            1] - self.class_adju
+                        confusion_dis[id1, id2] += loss1['euc_dist']
+                        acc1[int(self.solver.test_nets[0].blobs['label1'].data[
+                            0])] += self.solver.test_nets[0].blobs[
+                                'accuracy1'].data
+                        fre1[int(self.solver.test_nets[0].blobs['label1'].data[
+                            0])] += 1
+                        acc2[int(self.solver.test_nets[0].blobs['label2'].data[
+                            0])] += self.solver.test_nets[0].blobs[
+                                'accuracy2'].data
+                        fre2[int(self.solver.test_nets[0].blobs['label2'].data[
+                            0])] += 1
+                    netacc = (acc1.sum() + acc2.sum()) / (
+                        fre1.sum() + fre2.sum())
+                    netacc1 = (acc1.sum()) / (fre1.sum())
+                    netacc2 = (acc2.sum()) / (fre2.sum())
+                    acc1 = acc1 / (fre1 + 0.1)
+                    acc2 = acc2 / (fre2 + 0.1)
+                    plot_acc1 = np.vstack((plot_acc1, [k, netacc1]))
+                    plot_acc2 = np.vstack((plot_acc2, [k, netacc2]))
+                    print "testing**** net loss", simLoss / (
+                        simC + 0.1), disLoss / (disC + 0.1), simC, disC
+                    #print confusion_dis
+                    print acc1, acc2
+                    print netacc
+                    plt.figure(3)
+                    plt.xlim(-0.5, 100)
+                    plt.title(str(self.netSize) + "test accuracy")
+                    plt.plot(k, netacc1, 'r.')
+                    plt.plot(k, netacc2, 'b.')
+                    plt.pause(0.05)
+                    #import IPython
+                    #IPython.embed()
+
+                    plt.figure(4)
+                    #plt.clf()
+                    #plt.xlim(-0.5, 1.5)
+                    plt.xlim(-0.5, 100)
+                    plt.title(str(self.netSize) + "test distance")
+                    plt.plot(plot_data_s[:, 0], plot_data_s[:, 1], 'r.')
+                    plt.plot(plot_data_d[:, 0], plot_data_d[:, 1], 'b.')
+                    #plt.show()
+                    plt.pause(0.05)
+
+                if k % 1 == 0:
+                    preName = 'modifiedNetResults/' + 'Modified-netsize-' + str(
+                        self.netSize) + '-epoch-' + str(
+                            k) + '-tstamp-' + tStamp
+                    self.solver.net.save(preName + '-net.caffemodel')
 
         except KeyboardInterrupt:
             pass
 
-        preName = 'results/' + '-netsize-' + str(
+        preName = 'modifiedNetResults/' + 'Modified-netsize-' + str(
             self.netSize) + '-epoch-' + str(k) + '-tstamp-' + tStamp
         plt.ioff()
 
-        plt.figure(1).savefig(preName + '-train.png')
-        plt.figure(2).savefig(preName + '-test.png')
-        self.solver.net.save(preName + '-net.caffemodel')
+        plt.figure(1).savefig(preName + '-train-d-error.png')
+        plt.figure(1).savefig(preName + '-train-s-error.png')
+        plt.figure(3).savefig(preName + '-test-acc.png')
+        plt.figure(4).savefig(preName + '-test-dist.png')
+        self.solver.net.save(preName + '-net-final.caffemodel')
         plt.close('all')
 
 
