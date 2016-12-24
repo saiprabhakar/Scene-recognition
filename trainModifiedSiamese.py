@@ -14,19 +14,18 @@ pretrained_model_proto = 'placesOriginalModel/places_processed.prototxt'
 pretrained_model = 'placesOriginalModel/places205CNN_iter_300000_upgraded.caffemodel'
 siameseSolver = 'modifiedSiameseModels/siamesePlaces_' + str(
     netSize) + '_solver.prototxt'
-fileName = 'data/imagelist.txt'
+fileName = 'data/imagelist_test.txt'
 
 #to visualize toggle train and visu
 #to test toggle only train
-train = 1
-visu = 0
+train = 0
+visu = 1
 
 #load appropriate model while testing
-#pretrainedSiameseModel = 'results/-netsize-1000-epoch-59-tstamp--Timestamp-2016-12-19-00:44:21-net.caffemodel'
-#pretrainedSiameseModel = 'results/-netsize-100-epoch-20-tstamp--Timestamp-2016-12-19-18:07:35-net.caffemodel'
-pretrainedSiameseModel = None
+pretrainedSiameseModel = 'modifiedNetResults/Modified-netsize-1000-epoch-4-tstamp--Timestamp-2016-12-23-05:23:20-net-final.caffemodel'
+#pretrainedSiameseModel = None
 
-testProto = 'modifiedSiameseModels/siamesePlaces_' + str(
+testProto = 'modifiedSiameseModels/extracted_siamesePlaces_' + str(
     netSize) + '_test.prototxt'
 
 siameseTrainer(
