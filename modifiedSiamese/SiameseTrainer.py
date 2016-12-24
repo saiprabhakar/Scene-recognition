@@ -36,6 +36,12 @@ meanarr = cv2.resize(
     interpolation=cv2.INTER_LINEAR)
 
 
+def _round_image(img):
+    img[img > 255] = 255
+    img[img < 0] = 0
+    return img
+
+
 def _get_image_blob(img_name):
 
     im = _load_image(img_name)
@@ -332,6 +338,9 @@ class SiameseTrainWrapper2(object):
 
         size_patch = 30
         stride = 15
+        #TODO adaptive thresholding
+        #TODO padded occlusion
+        threshold = 50
 
         for i in lines:
             temp = i.split(' ')
@@ -342,17 +351,23 @@ class SiameseTrainWrapper2(object):
             #occlude im1 and get map on im1
             print 'generating heat map for ', imageDict[imlist[im1]], imlist[
                 im1]
-            im_gen = self.generate_heat_map_softmax(imageDict, imlist, im1,
-                                                    size_patch, stride)
+            im_gen = self.generate_heat_map_softmax(
+                imageDict, imlist, im1, size_patch, stride, threshold)
             preName = 'modifiedNetResults_visu/' + imlist[im1] + '-' + str(
                 size_patch) + str(stride) + '-' + '-M-nSize-' + str(
                     self.netSize) + '-tstamp-' + tStamp
             cv2.imwrite(preName + '.png', im_gen)
 
-    def generate_heat_map_softmax(self, imageDict, imlist, im1, size_patch,
-                                  stride):
+    def generate_heat_map_softmax(self,
+                                  imageDict,
+                                  imlist,
+                                  im1,
+                                  size_patch,
+                                  stride,
+                                  threshold=60):
         #size_patch = 30
         #stride = 15
+        offset = 200
         l_blobs_im1, l_occ_map = _get_occluded_image_blobs(
             img_name='data/' + imlist[im1],
             size_patch=size_patch,
@@ -382,20 +397,22 @@ class SiameseTrainWrapper2(object):
             #import IPython
             #IPython.embed()
 
-        heat_map = heat_map[:200, :200]
+        #import IPython
+        #IPython.embed()
+
+        heat_map = heat_map[:offset, :offset]
         #heat_map = np.log(heat_map + 1)
 
         heat_map_o = 100 * (heat_map - heat_map.min()) / (
             heat_map.max() - heat_map.min())
         img1 = _load_image('data/' + imlist[im1])
-        img1 = img1[:200, :200, :]
+        img1 = img1[:offset, :offset, :]
         #img2 = _load_image('data/' + imlist[im2])
 
         #img1_heat = img1.copy()
         #img1_heat[:, :, 2] = heat_map
         heat_map = heat_map_o.copy()
 
-        threshold = 60
         #invert the heat map
         heat_map = 100 - heat_map
         heat_map[heat_map < threshold] = 0
@@ -406,9 +423,15 @@ class SiameseTrainWrapper2(object):
         #plt.show()
 
         img1_o = img1.copy()
+        temp = np.sum(img1, axis=2) / 3.0
+        img1[:, :, 2] = temp
+        img1[:, :, 1] = temp
+        img1[:, :, 0] = temp
+
         img1[:, :, 2] += heat_map
-        img1[:, :, 1] -= heat_map
-        img1[:, :, 0] -= heat_map
+
+        #img1[:, :, 1] -= heat_map
+        #img1[:, :, 0] -= heat_map
         #cv2.imshow('image', img1.astype(np.uint8))
         #cv2.waitKey(0)
         #cv2.destroyAllWindows()
@@ -423,6 +446,7 @@ class SiameseTrainWrapper2(object):
         #ax1.set_title('Sharing Y axis')
         #ax2.imshow(img2)
         #plt.show()
+        img1 = _round_image(img1)
         return img1.astype(np.uint8)
 
 
