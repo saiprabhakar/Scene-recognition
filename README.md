@@ -1,4 +1,4 @@
-# floor_recog
+# scene-recognition-and-visualization
 ============
 
 This project involves developing one-shot learning methods for indoor sub-scene classification.
