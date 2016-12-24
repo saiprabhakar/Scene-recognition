@@ -36,6 +36,13 @@ meanarr = cv2.resize(
     interpolation=cv2.INTER_LINEAR)
 
 
+def _find_threshold(h_map, ratio):
+    assert ratio <= 1.0
+    temp = np.sort(
+        h_map.reshape(h_map.shape[0] * h_map.shape[1]), kind='mergesort')
+    return temp[int((1 - ratio) * len(temp))]
+
+
 def _round_image(img):
     img[img > 255] = 255
     img[img < 0] = 0
@@ -328,19 +335,19 @@ class SiameseTrainWrapper2(object):
         plt.close('all')
 
     def visualizing_m1(self, fileName):
+        ''' Visualizing using gray occlusion patches
+        '''
+        #TODO padded occlusion one all sides
+
         tStamp = '-Timestamp-{:%Y-%m-%d-%H:%M:%S}'.format(
             datetime.datetime.now())
-
         f = open(fileName)
         lines = [line.rstrip('\n') for line in f]
         imageDict = {}
         imlist = []
-
         size_patch = 30
         stride = 15
-        #TODO adaptive thresholding
-        #TODO padded occlusion
-        threshold = 50
+        highlighted_ratio = 0.25
 
         for i in lines:
             temp = i.split(' ')
@@ -352,7 +359,12 @@ class SiameseTrainWrapper2(object):
             print 'generating heat map for ', imageDict[imlist[im1]], imlist[
                 im1]
             im_gen = self.generate_heat_map_softmax(
-                imageDict, imlist, im1, size_patch, stride, threshold)
+                imageDict,
+                imlist,
+                im1,
+                size_patch,
+                stride,
+                ratio=highlighted_ratio)
             preName = 'modifiedNetResults_visu/' + imlist[im1] + '-' + str(
                 size_patch) + str(stride) + '-' + '-M-nSize-' + str(
                     self.netSize) + '-tstamp-' + tStamp
@@ -364,35 +376,25 @@ class SiameseTrainWrapper2(object):
                                   im1,
                                   size_patch,
                                   stride,
-                                  threshold=60):
-        #size_patch = 30
-        #stride = 15
+                                  ratio=0.25):
         offset = 200
         l_blobs_im1, l_occ_map = _get_occluded_image_blobs(
             img_name='data/' + imlist[im1],
             size_patch=size_patch,
             stride=stride)
         print "no of occluded maps ", len(l_blobs_im1)
-        #blob_im2 = _get_image_blob('data/' + imlist[im2])
         blobs = {'data': None}
-        #blobs['data'] = blob_im2
         heat_map = np.zeros((im_target_size, im_target_size))
 
         for i in range(len(l_blobs_im1)):
             blobs['data'] = l_blobs_im1[i]
-
             blobs_out1 = self.siameseTestNet.forward(data=blobs['data'].astype(
                 np.float32, copy=True))
-
-            #import IPython
-            #IPython.embed()
 
             p = self.siameseTestNet.blobs['fc9_f'].data[0]
             p = p - p.min()
             p = p / p.sum()
             prob1 = p[imageDict[imlist[im1]]]
-            #prob1 = blobs_out1['prob1'][0][imageDict[imlist[im1]]]
-            #print "prob1 ", prob1
             heat_map += l_occ_map[i] * prob1
             #import IPython
             #IPython.embed()
@@ -401,22 +403,20 @@ class SiameseTrainWrapper2(object):
         #IPython.embed()
 
         heat_map = heat_map[:offset, :offset]
-        #heat_map = np.log(heat_map + 1)
-
         heat_map_o = 100 * (heat_map - heat_map.min()) / (
             heat_map.max() - heat_map.min())
         img1 = _load_image('data/' + imlist[im1])
         img1 = img1[:offset, :offset, :]
-        #img2 = _load_image('data/' + imlist[im2])
-
-        #img1_heat = img1.copy()
-        #img1_heat[:, :, 2] = heat_map
         heat_map = heat_map_o.copy()
 
         #invert the heat map
         heat_map = 100 - heat_map
-        heat_map[heat_map < threshold] = 0
+        threshold = _find_threshold(heat_map, ratio)
 
+        #import IPython
+        #IPython.embed()
+
+        heat_map[heat_map < threshold] = 0
         heat_map *= 1.5
         #plt.matshow(heat_map)
         #plt.colorbar()
@@ -427,7 +427,6 @@ class SiameseTrainWrapper2(object):
         img1[:, :, 2] = temp
         img1[:, :, 1] = temp
         img1[:, :, 0] = temp
-
         img1[:, :, 2] += heat_map
 
         #img1[:, :, 1] -= heat_map
@@ -436,16 +435,6 @@ class SiameseTrainWrapper2(object):
         #cv2.waitKey(0)
         #cv2.destroyAllWindows()
 
-        #import IPython
-        #IPython.embed()
-        #import IPython
-        #IPython.embed()
-        #fig0 = plt.figure()
-        #f, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
-        #ax1.imshow(img1_heat)
-        #ax1.set_title('Sharing Y axis')
-        #ax2.imshow(img2)
-        #plt.show()
         img1 = _round_image(img1)
         return img1.astype(np.uint8)
 
@@ -483,7 +472,3 @@ def siameseTrainer(siameseSolver,
     else:
         print 'visalizing with ', pretrainedSiameseModel
         sw.visualizing_m1(fileName)
-
-    #sw = SiameseWrapper(siameseSolver, pretrained_model=pretrained_model, pretrained_model_proto= pretrained_model_proto, train=0 )
-
-    #sw.testCode( fileName)

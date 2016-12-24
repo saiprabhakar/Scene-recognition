@@ -14,7 +14,7 @@ pretrained_model_proto = 'placesOriginalModel/places_processed.prototxt'
 pretrained_model = 'placesOriginalModel/places205CNN_iter_300000_upgraded.caffemodel'
 siameseSolver = 'modifiedSiameseModels/siamesePlaces_' + str(
     netSize) + '_solver.prototxt'
-fileName = 'data/imagelist_test.txt'
+fileName = 'data/imagelist.txt'
 
 #to visualize toggle train and visu
 #to test toggle only train
