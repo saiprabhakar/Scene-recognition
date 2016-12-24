@@ -50,24 +50,15 @@ def _round_image(img):
 
 
 def _get_image_blob(img_name):
-
     im = _load_image(img_name)
-    #im = cv2.imread(img_name)
-    #print im.shape, meanarr.shape
     processed_ims = im - meanarr
-    #processed_ims = im
-    #IPython.embed()
     blob = im_to_blob(processed_ims)
-
     return blob
 
 
 def _load_image(img_name):
-    #TODO crop the image to a square one then reshape
     im = cv2.imread(img_name)
     im_orig = im.astype(np.float32, copy=True)
-    #im_shape = im_orig.shape
-    #im_size = im_shape[0:2]  #rows, colmns y,x
 
     min_curr_size = min(im.shape[:2])
     im_scale = float(im_target_size) / float(min_curr_size)
@@ -87,15 +78,16 @@ def _load_image(img_name):
 def _get_occluded_image_blobs(img_name, size_patch, stride):
     im = _load_image(img_name)
 
-    cR = 0
     l_blob = []
     l_occ_map = []
-    while im_target_size - 1 > cR + size_patch - 1:
-        cC = 0
-        while im_target_size - 1 > cC + size_patch - 1:
+    im_size1 = im.shape[0]
+    im_size2 = im.shape[1]
+    cR = -size_patch + 1
+    while im_size1 - 1 >= cR - 1:
+        cC = -size_patch + 1
+        while im_size2 - 1 > cC - 1:
             #import IPython
             #IPython.embed()
-
             occluded_image, occ_map = _occlude_image(im.copy(), cR, cC,
                                                      size_patch, stride)
             cC += stride
@@ -106,7 +98,6 @@ def _get_occluded_image_blobs(img_name, size_patch, stride):
             #cv2.destroyAllWindows()
 
             processed_ims = occluded_image - meanarr
-            #IPython.embed()
             l_blob.append(im_to_blob(processed_ims))
             l_occ_map.append(occ_map)
         cR += stride
@@ -114,13 +105,30 @@ def _get_occluded_image_blobs(img_name, size_patch, stride):
     return l_blob, l_occ_map
 
 
+def _get_coordinates(cR, cC, size_patch, maxRow, maxCol):
+    r1 = cR
+    r2 = cR + size_patch
+    c1 = cC
+    c2 = cC + size_patch
+    if r1 < 0:
+        r1 = 0
+    if r2 - 1 > maxRow - 1:
+        r2 = maxRow
+    if c1 < 0:
+        c1 = 0
+    if c2 - 1 > maxCol - 1:
+        c2 = maxCol
+
+    return r1, r2, c1, c2
+
+
 def _occlude_image(im, cR, cC, size_patch, stride):
     """creates gray patches in image."""
-    im[cR:cR + stride, cC:cC + stride, :] = 127.5
+    r1, r2, c1, c2 = _get_coordinates(cR, cC, size_patch, im.shape[0],
+                                      im.shape[1])
+    im[r1:r2, c1:c2, :] = 127.5
     occ_map = np.ones((im_target_size, im_target_size))
-    occ_map[cR:cR + stride, cC:cC + stride] = 0
-    #import IPython
-    #IPython.embed()
+    occ_map[r1:r2, c1:c2] = 0
     return im, occ_map
 
 
@@ -337,16 +345,14 @@ class SiameseTrainWrapper2(object):
     def visualizing_m1(self, fileName):
         ''' Visualizing using gray occlusion patches
         '''
-        #TODO padded occlusion one all sides
-
         tStamp = '-Timestamp-{:%Y-%m-%d-%H:%M:%S}'.format(
             datetime.datetime.now())
         f = open(fileName)
         lines = [line.rstrip('\n') for line in f]
         imageDict = {}
         imlist = []
-        size_patch = 30
-        stride = 15
+        size_patch = 100
+        stride = 10
         highlighted_ratio = 0.25
 
         for i in lines:
@@ -366,7 +372,7 @@ class SiameseTrainWrapper2(object):
                 stride,
                 ratio=highlighted_ratio)
             preName = 'modifiedNetResults_visu/' + imlist[im1] + '-' + str(
-                size_patch) + str(stride) + '-' + '-M-nSize-' + str(
+                size_patch) + '-' + str(stride) + '-' + '-M-nSize-' + str(
                     self.netSize) + '-tstamp-' + tStamp
             cv2.imwrite(preName + '.png', im_gen)
 
@@ -377,7 +383,7 @@ class SiameseTrainWrapper2(object):
                                   size_patch,
                                   stride,
                                   ratio=0.25):
-        offset = 200
+        offset = 228
         l_blobs_im1, l_occ_map = _get_occluded_image_blobs(
             img_name='data/' + imlist[im1],
             size_patch=size_patch,
