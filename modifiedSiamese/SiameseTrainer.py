@@ -473,8 +473,7 @@ def siameseTrainer(siameseSolver,
         print "training"
         sw.trainTest()
     elif visu == 0:
-        print "testing with ", pretrainedSiameseModel
-        sw.test(fileName)
+        print "test not implemented"
     else:
         print 'visalizing with ', pretrainedSiameseModel
         sw.visualizing_m1(fileName)
