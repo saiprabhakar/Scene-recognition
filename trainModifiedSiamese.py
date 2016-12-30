@@ -29,10 +29,7 @@ testProto = 'modifiedSiameseModels/extracted_siamesePlaces_' + str(
     netSize) + '_test.prototxt'
 
 siameseTrainer(
-    siameseSolver=siameseSolver,
-    pretrainedSiameseModel=pretrainedSiameseModel,
-    fileName=fileName,
-    pretrained_model=pretrained_model,
+    siameseSolver=siameseSolver,     pretrainedSiameseModel=pretrainedSiameseModel,      fileName=fileName,      pretrained_model=pretrained_model,
     pretrained_model_proto=pretrained_model_proto,
     testProto=testProto,
     train=train,
